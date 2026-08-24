@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Facturación | Team Sproviero</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
+    <!-- Carga directa del archivo JS -->
+    <script src="datos_facturacion.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-6 min-h-screen relative">
+    
+    <!-- Modal Interactivo -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 id="modalTitulo" class="text-2xl font-bold text-slate-800 mb-6">Detalle</h2>
+            
+            <div id="modalFA" class="hidden">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores del Equipo (Click para ver clientes)</h3>
+                <div class="relative h-[400px]"><canvas id="chartModalFA"></canvas></div>
+            </div>
+
+            <div id="modalIFA" class="hidden">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Clientes del Productor (Click para ver cliente)</h3>
+                <div class="relative h-[400px]"><canvas id="chartModalIFA"></canvas></div>
+            </div>
+
+            <div id="modalCliente" class="hidden">
+                <div class="flex justify-end gap-2 mb-4">
+                    <button id="btnModalCliMTD" onclick="renderizarModalClienteGraficos('mtd')" class="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition">MTD</button>
+                    <button id="btnModalCliYTD" onclick="renderizarModalClienteGraficos('ytd')" class="bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition">YTD</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evolución de Facturación</h3>
+                        <div class="relative h-[300px]"><canvas id="chartModalClienteLinea"></canvas></div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Composición por Ticker</h3>
+                        <div class="relative h-[300px] flex justify-center"><canvas id="chartModalClienteTicker"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalTicker" class="hidden">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores operando este Ticker (Click en barra)</h3>
+                <div class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-300 pb-2 gap-4">
+            <div class="flex gap-4">
+                <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide">MTD (Mes Actual)</button>
+                <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide">YTD (Año Corriente)</button>
+            </div>
+            <div class="bg-amber-100 border border-amber-300 text-amber-800 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Información actualizada al: <span id="lblActualizacion" class="font-bold">--/--/----</span>
+            </div>
+        </div>
+
+        <header class="flex flex-col md:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Dashboard de Facturación</h1>
+                <p id="lblPeriodo" class="text-slate-500 text-sm font-semibold">Team Sproviero</p>
+            </div>
+            <div class="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md border border-blue-700 cursor-default">
+                <p class="text-xs text-blue-200 uppercase font-bold tracking-wider">Facturación Total</p>
+                <h2 class="text-3xl font-bold">u$s <span id="kpiTotal">0</span></h2>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Top Productores (Click en barra) 🔍</h3>
+                <div class="relative h-[300px]"><canvas id="chartIFA"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Top Clientes (Click en barra) 🔍</h3>
+                <div class="relative h-[300px]"><canvas id="chartCliente"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Facturación por FA (Click en porción) 🔍</h3>
+                <div class="relative h-[300px] flex justify-center"><canvas id="chartFA"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Proporción por Ticker (Click en caja) 🔍</h3>
+                <div class="relative h-[300px]"><canvas id="chartTicker"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evolución de Facturación</h3>
+            <div class="relative h-64"><canvas id="chartEvolucion"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        const formatoUSD = (valor) => valor.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        let graficosActivos = {}; 
+        let modalCharts = {};
+        let periodoActual = 'mtd';
+        let clienteAbiertoActual = ''; 
+
+        function cerrarModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            Object.values(modalCharts).forEach(chart => chart.destroy());
+        }
+
+        function mostrarSeccionModal(idMostrar) {
+            ['modalFA', 'modalIFA', 'modalCliente', 'modalTicker'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(idMostrar).classList.remove('hidden');
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function abrirModalFA(faName) {
+            const data = datosDashboard[periodoActual].fa_detalles[faName];
+            if(!data) return;
+            document.getElementById('modalTitulo').innerText = `Equipo: ${faName}`;
+            mostrarSeccionModal('modalFA');
+            if(modalCharts.fa) modalCharts.fa.destroy();
+            modalCharts.fa = new Chart(document.getElementById('chartModalFA').getContext('2d'), {
+                type: 'bar',
+                data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.labels[els[0].index]); } }
+            });
+        }
+
+        function abrirModalIFA(ifaName) {
+            const data = datosDashboard[periodoActual].ifa_detalles[ifaName];
+            if(!data) return;
+            document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
+            mostrarSeccionModal('modalIFA');
+            if(modalCharts.ifa) modalCharts.ifa.destroy();
+            modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
+                type: 'bar',
+                data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(data.labels[els[0].index]); } }
+            });
+        }
+
+        function abrirModalCliente(clienteName) {
+            clienteAbiertoActual = clienteName;
+            mostrarSeccionModal('modalCliente');
+            renderizarModalClienteGraficos(periodoActual); 
+        }
+
+        function renderizarModalClienteGraficos(periodoVista) {
+            const data = datosDashboard[periodoVista].cliente_detalles[clienteAbiertoActual];
+            const btnM = document.getElementById('btnModalCliMTD');
+            const btnY = document.getElementById('btnModalCliYTD');
+            
+            if(periodoVista === 'mtd') {
+                btnM.className = "bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition";
+                btnY.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition";
+            } else {
+                btnY.className = "bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition";
+                btnM.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition";
+            }
+
+            if(!data) {
+                document.getElementById('modalTitulo').innerText = `Cliente: ${clienteAbiertoActual} (Sin operaciones en ${periodoVista.toUpperCase()})`;
+                if(modalCharts.cliLinea) modalCharts.cliLinea.destroy();
+                if(modalCharts.cliTicker) modalCharts.cliTicker.destroy();
+                return;
+            }
+
+            document.getElementById('modalTitulo').innerText = `Cliente: ${clienteAbiertoActual} (u$s ${formatoUSD(data.total)} en ${periodoVista.toUpperCase()})`;
+            if(modalCharts.cliLinea) modalCharts.cliLinea.destroy();
+            modalCharts.cliLinea = new Chart(document.getElementById('chartModalClienteLinea').getContext('2d'), {
+                type: 'line', data: { labels: data.fechas.labels, datasets: [{ label: 'USD', data: data.fechas.values, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            if(modalCharts.cliTicker) modalCharts.cliTicker.destroy();
+            modalCharts.cliTicker = new Chart(document.getElementById('chartModalClienteTicker').getContext('2d'), {
+                type: 'doughnut', data: { labels: data.ticker.map(t=>t.t), datasets: [{ data: data.ticker.map(t=>t.v), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f97316'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+        }
+
+        function abrirModalTicker(tickerName) {
+            const data = datosDashboard[periodoActual].ticker_detalles[tickerName];
+            if(!data) return;
+            document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
+            mostrarSeccionModal('modalTicker');
+            if(modalCharts.ticker) modalCharts.ticker.destroy();
+            modalCharts.ticker = new Chart(document.getElementById('chartModalTicker').getContext('2d'), {
+                type: 'bar', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#8b5cf6', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.labels[els[0].index]); } }
+            });
+        }
+
+        function renderizarDashboard(periodo) {
+            if (typeof datosDashboard === 'undefined') {
+                console.error("El archivo datos_facturacion.js no fue encontrado o no definió 'datosDashboard'.");
+                return;
+            }
+            periodoActual = periodo;
+            const data = datosDashboard[periodo];
+            
+            document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
+            document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
+            document.getElementById('lblPeriodo').innerText = `Team Sproviero - Información ${periodo.toUpperCase()}`;
+
+            Object.values(graficosActivos).forEach(g => g.destroy());
+
+            graficosActivos.ifa = new Chart(document.getElementById('chartIFA').getContext('2d'), {
+                type: 'bar', data: { labels: data.ifa.labels, datasets: [{ data: data.ifa.values, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.ifa.labels[els[0].index]); } }
+            });
+
+            graficosActivos.cliente = new Chart(document.getElementById('chartCliente').getContext('2d'), {
+                type: 'bar', data: { labels: data.cliente.labels, datasets: [{ data: data.cliente.values, backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(data.cliente.labels[els[0].index]); } }
+            });
+
+            graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
+                type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: ['#9f1239', '#e11d48', '#f97316', '#3b82f6', '#1e3a8a', '#10b981', '#6366f1'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
+            });
+
+            graficosActivos.ticker = new Chart(document.getElementById('chartTicker').getContext('2d'), {
+                type: 'treemap',
+                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 1, borderWidth: 1, borderColor: '#ffffff', backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; const p = ['#69b3a2', '#407f7f', '#ff9e9d', '#ff3d68', '#a8d8ea', '#aa96da', '#fcbad3', '#3b82f6', '#f59e0b']; return p[ctx.dataIndex % p.length]; }, labels: { display: true, formatter: (ctx) => ctx.type === 'data' ? [ctx.raw.g, "$" + formatoUSD(ctx.raw.v)] : [], color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } }
+            });
+
+            graficosActivos.evolucion = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
+                type: 'line', data: { labels: data.fechas.labels, datasets: [{ data: data.fechas.values, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function cambiarSolapa(periodo) {
+            const btnMtd = document.getElementById('btn-mtd');
+            const btnYtd = document.getElementById('btn-ytd');
+            if(periodo === 'mtd') {
+                btnMtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
+                btnYtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+            } else {
+                btnYtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
+                btnMtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+            }
+            renderizarDashboard(periodo);
+        }
+
+        window.onload = () => {
+            if (typeof datosDashboard !== 'undefined') {
+                cambiarSolapa('mtd');
+            }
+        };
+    </script>
+</body>
+</html>
