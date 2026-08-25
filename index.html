@@ -15,18 +15,28 @@
     <!-- Modal Interactivo -->
     <div id="modalOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative">
-            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition z-10">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <h2 id="modalTitulo" class="text-2xl font-bold text-slate-800 mb-6">Detalle</h2>
+            <h2 id="modalTitulo" class="text-2xl font-bold text-slate-800 mb-6 pr-8">Detalle</h2>
             
             <div id="modalFA" class="hidden">
                 <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores del Equipo</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalFA"></canvas></div>
             </div>
 
-            <div id="modalIFA" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Clientes del Productor</h3>
+            <!-- MODAL IFA -->
+            <div id="modalIFA" class="hidden flex-col h-full">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-500 uppercase">Top Clientes del Productor</h3>
+                        <!-- Aca cambiamos a "FA:" -->
+                        <p id="lblModalFAEquipo" class="text-xs text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded inline-block"></p>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <input type="text" id="buscadorClienteModal" oninput="filtrarGraficoClienteModal()" placeholder="Buscar cliente en este productor..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+                    </div>
+                </div>
                 <div class="relative h-[400px]"><canvas id="chartModalIFA"></canvas></div>
             </div>
 
@@ -47,8 +57,15 @@
                 </div>
             </div>
 
+            <!-- MODAL TICKER DUAL -->
             <div id="modalTicker" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores operando este Ticker</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="lblModalTickerSub" class="text-sm font-bold text-slate-500 uppercase">Productores</h3>
+                    <div class="flex gap-2">
+                        <button id="btnTkIFA" onclick="renderizarGraficoTickerDual('ifa')" class="bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition">Productores</button>
+                        <button id="btnTkCli" onclick="renderizarGraficoTickerDual('cliente')" class="bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition">Clientes</button>
+                    </div>
+                </div>
                 <div class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
             </div>
         </div>
@@ -57,7 +74,6 @@
     <!-- MAIN DASHBOARD -->
     <div class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Pestañas y Selector Global de FA -->
         <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-300 pb-2 gap-4">
             <div class="flex flex-col md:flex-row items-center gap-6">
                 <div class="flex items-center gap-2">
@@ -84,7 +100,6 @@
                 <p id="lblPeriodo" class="text-slate-500 text-sm font-semibold">Team Sproviero</p>
             </div>
             
-            <!-- Contenedor de KPIs -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full lg:w-auto">
                 <div class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md border border-blue-700">
                     <p class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Facturación Total</p>
@@ -107,11 +122,9 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- PRODUCTORES -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Productores (Click en barra) 🔍</h3>
-                    <!-- Buscador IFA -->
                     <div class="relative w-48">
                         <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
                     </div>
@@ -119,11 +132,9 @@
                 <div class="relative h-[300px]"><canvas id="chartIFA"></canvas></div>
             </div>
 
-            <!-- CLIENTES -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Clientes (Click en barra) 🔍</h3>
-                    <!-- Buscador Cliente -->
                     <div class="relative w-48">
                         <input type="text" id="buscadorCliente" oninput="filtrarGraficoCliente()" placeholder="Buscar cliente..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
                     </div>
@@ -156,10 +167,11 @@
         let periodoActual = 'mtd';
         let vistaGlobalFA = 'EQUIPO'; 
         let clienteAbiertoActual = ''; 
+        let tickerAbiertoActual = '';
         
-        // Arrays originales sin filtrar para los buscadores (Ahora almacenarán TODOS los registros, no solo 15)
         let dataIFAOriginal = { labels: [], values: [], tooltips: [] };
         let dataClienteOriginal = { labels: [], values: [] };
+        let dataModalIFAOriginal = { labels: [], values: [] };
 
         window.onload = () => {
             if (typeof datosDashboard !== 'undefined') {
@@ -205,58 +217,53 @@
             renderizarDashboard();
         }
 
-        // --- LÓGICA REFINADA DE BUSCADORES DE GRÁFICOS ---
-        
+        // --- LÓGICA DE BUSCADORES ---
         function filtrarGraficoIFA() {
             const texto = document.getElementById('buscadorIFA').value.toLowerCase();
-            
             if (texto === '') {
-                // Restauramos el "Top 15" original
                 actualizarGraficoInstancia(graficosActivos.ifa, dataIFAOriginal.labels.slice(0,15), dataIFAOriginal.values.slice(0,15), dataIFAOriginal.tooltips.slice(0,15));
                 return;
             }
-
             let combinados = [];
-            
-            // Iteramos sobre la base original completa que ya no está cortada
             dataIFAOriginal.labels.forEach((ifa, i) => {
                 if (ifa.toLowerCase().includes(texto)) {
-                    combinados.push({
-                        l: ifa, 
-                        v: dataIFAOriginal.values[i], 
-                        t: dataIFAOriginal.tooltips[i]
-                    });
+                    combinados.push({ l: ifa, v: dataIFAOriginal.values[i], t: dataIFAOriginal.tooltips[i] });
                 }
             });
-            
-            // Ordenamos los hallazgos de mayor facturación a menor
             combinados.sort((a,b) => b.v - a.v);
-
             actualizarGraficoInstancia(graficosActivos.ifa, combinados.map(c=>c.l).slice(0,15), combinados.map(c=>c.v).slice(0,15), combinados.map(c=>c.t).slice(0,15));
         }
 
         function filtrarGraficoCliente() {
             const texto = document.getElementById('buscadorCliente').value.toLowerCase();
-            
             if (texto === '') {
                 actualizarGraficoInstancia(graficosActivos.cliente, dataClienteOriginal.labels.slice(0,15), dataClienteOriginal.values.slice(0,15), null);
                 return;
             }
-
             let combinados = [];
-            
             dataClienteOriginal.labels.forEach((cli, i) => {
                 if (cli.toLowerCase().includes(texto)) {
-                    combinados.push({
-                        l: cli, 
-                        v: dataClienteOriginal.values[i]
-                    });
+                    combinados.push({ l: cli, v: dataClienteOriginal.values[i] });
                 }
             });
-
             combinados.sort((a,b) => b.v - a.v);
-
             actualizarGraficoInstancia(graficosActivos.cliente, combinados.map(c=>c.l).slice(0,15), combinados.map(c=>c.v).slice(0,15), null);
+        }
+
+        function filtrarGraficoClienteModal() {
+            const texto = document.getElementById('buscadorClienteModal').value.toLowerCase();
+            if (texto === '') {
+                actualizarGraficoInstancia(modalCharts.ifa, dataModalIFAOriginal.labels.slice(0,15), dataModalIFAOriginal.values.slice(0,15), null);
+                return;
+            }
+            let combinados = [];
+            dataModalIFAOriginal.labels.forEach((cli, i) => {
+                if (cli.toLowerCase().includes(texto)) {
+                    combinados.push({ l: cli, v: dataModalIFAOriginal.values[i] });
+                }
+            });
+            combinados.sort((a,b) => b.v - a.v);
+            actualizarGraficoInstancia(modalCharts.ifa, combinados.map(c=>c.l).slice(0,15), combinados.map(c=>c.v).slice(0,15), null);
         }
 
         function actualizarGraficoInstancia(grafico, nuevasLabels, nuevosValores, nuevosTooltips = null) {
@@ -270,7 +277,6 @@
         }
 
         // --- DRILL-DOWN LOGIC (MODALES) ---
-
         function cerrarModal() {
             document.getElementById('modalOverlay').classList.add('hidden');
             Object.values(modalCharts).forEach(chart => chart.destroy());
@@ -299,12 +305,20 @@
         function abrirModalIFA(ifaName) {
             const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ifa_detalles[ifaName];
             if(!data) return;
+            
             document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
+            document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
+            document.getElementById('buscadorClienteModal').value = '';
+            
+            dataModalIFAOriginal.labels = data.labels;
+            dataModalIFAOriginal.values = data.values;
+
             mostrarSeccionModal('modalIFA');
             if(modalCharts.ifa) modalCharts.ifa.destroy();
+            
             modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
-                type: 'bar', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#10b981', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(data.labels[els[0].index]); } }
+                type: 'bar', data: { labels: data.labels.slice(0, 15), datasets: [{ data: data.values.slice(0, 15), backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(modalCharts.ifa.data.labels[els[0].index]); } }
             });
         }
 
@@ -348,15 +362,45 @@
             });
         }
 
+        // SISTEMA DUAL DE TICKER (IFA vs Cliente)
         function abrirModalTicker(tickerName) {
-            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ticker_detalles[tickerName];
-            if(!data) return;
+            tickerAbiertoActual = tickerName;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
             mostrarSeccionModal('modalTicker');
+            renderizarGraficoTickerDual('ifa'); 
+        }
+
+        function renderizarGraficoTickerDual(vista) {
+            const dataObj = datosDashboard.vistas[vistaGlobalFA][periodoActual].ticker_detalles[tickerAbiertoActual];
+            if(!dataObj) return;
+
+            const dataToRender = vista === 'ifa' ? dataObj.ifa : dataObj.cliente;
+            const bgColor = vista === 'ifa' ? '#8b5cf6' : '#10b981';
+            
+            document.getElementById('lblModalTickerSub').innerText = vista === 'ifa' ? 'Top Productores operando este Ticker' : 'Top Clientes operando este Ticker';
+
+            const btnI = document.getElementById('btnTkIFA');
+            const btnC = document.getElementById('btnTkCli');
+            if(vista === 'ifa') {
+                btnI.className = "bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition";
+                btnC.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition";
+            } else {
+                btnC.className = "bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition";
+                btnI.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition";
+            }
+
             if(modalCharts.ticker) modalCharts.ticker.destroy();
             modalCharts.ticker = new Chart(document.getElementById('chartModalTicker').getContext('2d'), {
-                type: 'bar', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#8b5cf6', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.labels[els[0].index]); } }
+                type: 'bar', data: { labels: dataToRender.labels.slice(0, 15), datasets: [{ data: dataToRender.values.slice(0, 15), backgroundColor: bgColor, borderRadius: 4 }] },
+                options: { 
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, 
+                    onClick: (e, els) => { 
+                        if(els.length > 0) {
+                            if (vista === 'ifa') abrirModalIFA(modalCharts.ticker.data.labels[els[0].index]);
+                            else abrirModalCliente(modalCharts.ticker.data.labels[els[0].index]);
+                        } 
+                    } 
+                }
             });
         }
 
@@ -366,7 +410,6 @@
             
             const data = datosDashboard.vistas[vistaGlobalFA][periodoActual];
             
-            // Backup data completa para los filtros
             dataIFAOriginal.labels = data.ifa.labels;
             dataIFAOriginal.values = data.ifa.values;
             dataIFAOriginal.tooltips = data.ifa.tooltips;
@@ -374,7 +417,6 @@
             dataClienteOriginal.labels = data.cliente.labels;
             dataClienteOriginal.values = data.cliente.values;
             
-            // --- ACTUALIZACIÓN DE KPIs ---
             document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
             document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
             
@@ -393,7 +435,6 @@
 
             Object.values(graficosActivos).forEach(g => g.destroy());
 
-            // Al renderizar, cortamos en 15 visualmente para no saturar la pantalla
             graficosActivos.ifa = new Chart(document.getElementById('chartIFA').getContext('2d'), {
                 type: 'bar', 
                 data: { 
@@ -440,7 +481,14 @@
 
             graficosActivos.ticker = new Chart(document.getElementById('chartTicker').getContext('2d'), {
                 type: 'treemap',
-                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 1, borderWidth: 1, borderColor: '#ffffff', backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; const p = ['#69b3a2', '#407f7f', '#ff9e9d', '#ff3d68', '#a8d8ea', '#aa96da', '#fcbad3', '#3b82f6', '#f59e0b']; return p[ctx.dataIndex % p.length]; }, labels: { display: true, formatter: (ctx) => ctx.type === 'data' ? [ctx.raw.g, "$" + formatoUSD(ctx.raw.v)] : [], color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
+                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 1, borderWidth: 1, borderColor: '#ffffff', backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; const p = ['#69b3a2', '#407f7f', '#ff9e9d', '#ff3d68', '#a8d8ea', '#aa96da', '#fcbad3', '#3b82f6', '#f59e0b']; return p[ctx.dataIndex % p.length]; }, 
+                labels: { display: true, formatter: (ctx) => {
+                    if (ctx.type !== 'data') return [];
+                    const sum = ctx.chart.data.datasets[0].tree.reduce((acc, item) => acc + item.v, 0);
+                    const pct = ((ctx.raw.v / sum) * 100).toFixed(1) + "%";
+                    return [ctx.raw.g, "$" + formatoUSD(ctx.raw.v), pct];
+                }, color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
+                
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } }
             });
 
