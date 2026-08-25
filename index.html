@@ -21,12 +21,12 @@
             <h2 id="modalTitulo" class="text-2xl font-bold text-slate-800 mb-6">Detalle</h2>
             
             <div id="modalFA" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores del Equipo (Click para ver clientes)</h3>
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores del Equipo</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalFA"></canvas></div>
             </div>
 
             <div id="modalIFA" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Clientes del Productor (Click para ver cliente)</h3>
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Clientes del Productor</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalIFA"></canvas></div>
             </div>
 
@@ -48,7 +48,7 @@
             </div>
 
             <div id="modalTicker" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores operando este Ticker (Click en barra)</h3>
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores operando este Ticker</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
             </div>
         </div>
@@ -56,41 +56,86 @@
 
     <!-- MAIN DASHBOARD -->
     <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Pestañas y Selector Global de FA -->
         <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-300 pb-2 gap-4">
-            <div class="flex gap-4">
-                <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide">MTD (Mes Actual)</button>
-                <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide">YTD (Año Corriente)</button>
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <label for="selectorFA" class="text-sm font-bold text-slate-600 uppercase">Equipo (FA):</label>
+                    <select id="selectorFA" onchange="cambiarVistaGlobal()" class="bg-white border border-slate-300 text-slate-700 font-semibold py-1.5 px-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="EQUIPO">EQUIPO</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide disabled:opacity-50">MTD (Mes Actual)</button>
+                    <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide disabled:opacity-50">YTD (Año Corriente)</button>
+                </div>
             </div>
+            
             <div class="bg-amber-100 border border-amber-300 text-amber-800 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Información actualizada al: <span id="lblActualizacion" class="font-bold">--/--/----</span>
+                Actualizado al: <span id="lblActualizacion" class="font-bold">--/--/----</span>
             </div>
         </div>
 
-        <header class="flex flex-col md:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-5 rounded-xl shadow-sm border border-slate-200 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Dashboard de Facturación</h1>
                 <p id="lblPeriodo" class="text-slate-500 text-sm font-semibold">Team Sproviero</p>
             </div>
-            <div class="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md border border-blue-700 cursor-default">
-                <p class="text-xs text-blue-200 uppercase font-bold tracking-wider">Facturación Total</p>
-                <h2 class="text-3xl font-bold">u$s <span id="kpiTotal">0</span></h2>
+            
+            <!-- Contenedor de KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full lg:w-auto">
+                <div class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md border border-blue-700">
+                    <p class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Facturación Total</p>
+                    <h2 class="text-2xl font-bold">u$s <span id="kpiTotal">0</span></h2>
+                </div>
+                <div class="bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-md border border-emerald-700">
+                    <p class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Run Rate</p>
+                    <h2 class="text-2xl font-bold">u$s <span id="kpiRunRate">0</span></h2>
+                </div>
+                <div class="bg-purple-600 text-white px-4 py-3 rounded-lg shadow-md border border-purple-700">
+                    <p id="lblPlan" class="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Plan Objetivo</p>
+                    <h2 class="text-2xl font-bold">u$s <span id="kpiPlan">0</span></h2>
+                </div>
+                <div class="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-md border border-slate-700">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">% Cumplimiento</p>
+                    <h2 class="text-2xl font-bold"><span id="kpiCumplimiento">0</span>%</h2>
+                </div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Top Productores (Click en barra) 🔍</h3>
+            
+            <!-- PRODUCTORES -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Productores (Click en barra) 🔍</h3>
+                    <!-- Buscador IFA -->
+                    <div class="relative w-48">
+                        <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+                    </div>
+                </div>
                 <div class="relative h-[300px]"><canvas id="chartIFA"></canvas></div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Top Clientes (Click en barra) 🔍</h3>
+
+            <!-- CLIENTES -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Clientes (Click en barra) 🔍</h3>
+                    <!-- Buscador Cliente -->
+                    <div class="relative w-48">
+                        <input type="text" id="buscadorCliente" oninput="filtrarGraficoCliente()" placeholder="Buscar cliente..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+                    </div>
+                </div>
                 <div class="relative h-[300px]"><canvas id="chartCliente"></canvas></div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+
+            <div id="boxFA" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
                 <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Facturación por FA (Click en porción) 🔍</h3>
                 <div class="relative h-[300px] flex justify-center"><canvas id="chartFA"></canvas></div>
             </div>
+            
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
                 <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Proporción por Ticker (Click en caja) 🔍</h3>
                 <div class="relative h-[300px]"><canvas id="chartTicker"></canvas></div>
@@ -107,8 +152,124 @@
         const formatoUSD = (valor) => valor.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
         let graficosActivos = {}; 
         let modalCharts = {};
+        
         let periodoActual = 'mtd';
+        let vistaGlobalFA = 'EQUIPO'; 
         let clienteAbiertoActual = ''; 
+        
+        // Arrays originales sin filtrar para los buscadores (Ahora almacenarán TODOS los registros, no solo 15)
+        let dataIFAOriginal = { labels: [], values: [], tooltips: [] };
+        let dataClienteOriginal = { labels: [], values: [] };
+
+        window.onload = () => {
+            if (typeof datosDashboard !== 'undefined') {
+                document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
+                
+                const selector = document.getElementById('selectorFA');
+                datosDashboard.lista_fas.forEach(fa => {
+                    const opt = document.createElement('option');
+                    opt.value = fa;
+                    opt.innerText = fa;
+                    selector.appendChild(opt);
+                });
+
+                cambiarVistaGlobal();
+            }
+        };
+
+        function cambiarVistaGlobal() {
+            vistaGlobalFA = document.getElementById('selectorFA').value;
+            if (vistaGlobalFA === 'EQUIPO') {
+                document.getElementById('boxFA').classList.remove('hidden');
+            } else {
+                document.getElementById('boxFA').classList.add('hidden');
+            }
+            document.getElementById('buscadorIFA').value = '';
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
+        }
+
+        function cambiarSolapa(periodo) {
+            periodoActual = periodo;
+            const btnMtd = document.getElementById('btn-mtd');
+            const btnYtd = document.getElementById('btn-ytd');
+            if(periodo === 'mtd') {
+                btnMtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
+                btnYtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+            } else {
+                btnYtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
+                btnMtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+            }
+            document.getElementById('buscadorIFA').value = '';
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
+        }
+
+        // --- LÓGICA REFINADA DE BUSCADORES DE GRÁFICOS ---
+        
+        function filtrarGraficoIFA() {
+            const texto = document.getElementById('buscadorIFA').value.toLowerCase();
+            
+            if (texto === '') {
+                // Restauramos el "Top 15" original
+                actualizarGraficoInstancia(graficosActivos.ifa, dataIFAOriginal.labels.slice(0,15), dataIFAOriginal.values.slice(0,15), dataIFAOriginal.tooltips.slice(0,15));
+                return;
+            }
+
+            let combinados = [];
+            
+            // Iteramos sobre la base original completa que ya no está cortada
+            dataIFAOriginal.labels.forEach((ifa, i) => {
+                if (ifa.toLowerCase().includes(texto)) {
+                    combinados.push({
+                        l: ifa, 
+                        v: dataIFAOriginal.values[i], 
+                        t: dataIFAOriginal.tooltips[i]
+                    });
+                }
+            });
+            
+            // Ordenamos los hallazgos de mayor facturación a menor
+            combinados.sort((a,b) => b.v - a.v);
+
+            actualizarGraficoInstancia(graficosActivos.ifa, combinados.map(c=>c.l).slice(0,15), combinados.map(c=>c.v).slice(0,15), combinados.map(c=>c.t).slice(0,15));
+        }
+
+        function filtrarGraficoCliente() {
+            const texto = document.getElementById('buscadorCliente').value.toLowerCase();
+            
+            if (texto === '') {
+                actualizarGraficoInstancia(graficosActivos.cliente, dataClienteOriginal.labels.slice(0,15), dataClienteOriginal.values.slice(0,15), null);
+                return;
+            }
+
+            let combinados = [];
+            
+            dataClienteOriginal.labels.forEach((cli, i) => {
+                if (cli.toLowerCase().includes(texto)) {
+                    combinados.push({
+                        l: cli, 
+                        v: dataClienteOriginal.values[i]
+                    });
+                }
+            });
+
+            combinados.sort((a,b) => b.v - a.v);
+
+            actualizarGraficoInstancia(graficosActivos.cliente, combinados.map(c=>c.l).slice(0,15), combinados.map(c=>c.v).slice(0,15), null);
+        }
+
+        function actualizarGraficoInstancia(grafico, nuevasLabels, nuevosValores, nuevosTooltips = null) {
+            if(!grafico) return;
+            grafico.data.labels = nuevasLabels;
+            grafico.data.datasets[0].data = nuevosValores;
+            if (nuevosTooltips) {
+                grafico.data.datasets[0].customTooltips = nuevosTooltips;
+            }
+            grafico.update();
+        }
+
+        // --- DRILL-DOWN LOGIC (MODALES) ---
 
         function cerrarModal() {
             document.getElementById('modalOverlay').classList.add('hidden');
@@ -124,27 +285,25 @@
         }
 
         function abrirModalFA(faName) {
-            const data = datosDashboard[periodoActual].fa_detalles[faName];
+            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].fa_detalles[faName];
             if(!data) return;
             document.getElementById('modalTitulo').innerText = `Equipo: ${faName}`;
             mostrarSeccionModal('modalFA');
             if(modalCharts.fa) modalCharts.fa.destroy();
             modalCharts.fa = new Chart(document.getElementById('chartModalFA').getContext('2d'), {
-                type: 'bar',
-                data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                type: 'bar', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#3b82f6', borderRadius: 4 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.labels[els[0].index]); } }
             });
         }
 
         function abrirModalIFA(ifaName) {
-            const data = datosDashboard[periodoActual].ifa_detalles[ifaName];
+            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ifa_detalles[ifaName];
             if(!data) return;
             document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
             mostrarSeccionModal('modalIFA');
             if(modalCharts.ifa) modalCharts.ifa.destroy();
             modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
-                type: 'bar',
-                data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#10b981', borderRadius: 4 }] },
+                type: 'bar', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: '#10b981', borderRadius: 4 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(data.labels[els[0].index]); } }
             });
         }
@@ -156,7 +315,7 @@
         }
 
         function renderizarModalClienteGraficos(periodoVista) {
-            const data = datosDashboard[periodoVista].cliente_detalles[clienteAbiertoActual];
+            const data = datosDashboard.vistas[vistaGlobalFA][periodoVista].cliente_detalles[clienteAbiertoActual];
             const btnM = document.getElementById('btnModalCliMTD');
             const btnY = document.getElementById('btnModalCliYTD');
             
@@ -190,7 +349,7 @@
         }
 
         function abrirModalTicker(tickerName) {
-            const data = datosDashboard[periodoActual].ticker_detalles[tickerName];
+            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ticker_detalles[tickerName];
             if(!data) return;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
             mostrarSeccionModal('modalTicker');
@@ -201,34 +360,83 @@
             });
         }
 
-        function renderizarDashboard(periodo) {
-            if (typeof datosDashboard === 'undefined') {
-                console.error("El archivo datos_facturacion.js no fue encontrado o no definió 'datosDashboard'.");
-                return;
-            }
-            periodoActual = periodo;
-            const data = datosDashboard[periodo];
+        // --- MAIN RENDER ---
+        function renderizarDashboard() {
+            if (typeof datosDashboard === 'undefined') return;
             
-            document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
+            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual];
+            
+            // Backup data completa para los filtros
+            dataIFAOriginal.labels = data.ifa.labels;
+            dataIFAOriginal.values = data.ifa.values;
+            dataIFAOriginal.tooltips = data.ifa.tooltips;
+            
+            dataClienteOriginal.labels = data.cliente.labels;
+            dataClienteOriginal.values = data.cliente.values;
+            
+            // --- ACTUALIZACIÓN DE KPIs ---
             document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
-            document.getElementById('lblPeriodo').innerText = `Team Sproviero - Información ${periodo.toUpperCase()}`;
+            document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
+            
+            if (periodoActual === 'mtd') {
+                document.getElementById('lblPlan').innerText = "Plan Mensual";
+                document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
+                document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            } else {
+                document.getElementById('lblPlan').innerText = "Plan Anual";
+                document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
+                document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_ytd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            }
+
+            const tituloEquipo = vistaGlobalFA === 'EQUIPO' ? 'Team Sproviero' : `Equipo: ${vistaGlobalFA}`;
+            document.getElementById('lblPeriodo').innerText = `${tituloEquipo} - Información ${periodoActual.toUpperCase()}`;
 
             Object.values(graficosActivos).forEach(g => g.destroy());
 
+            // Al renderizar, cortamos en 15 visualmente para no saturar la pantalla
             graficosActivos.ifa = new Chart(document.getElementById('chartIFA').getContext('2d'), {
-                type: 'bar', data: { labels: data.ifa.labels, datasets: [{ data: data.ifa.values, backgroundColor: '#3b82f6', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalIFA(data.ifa.labels[els[0].index]); } }
+                type: 'bar', 
+                data: { 
+                    labels: data.ifa.labels.slice(0, 15), 
+                    datasets: [{ 
+                        data: data.ifa.values.slice(0, 15), 
+                        backgroundColor: '#3b82f6', 
+                        borderRadius: 4, 
+                        customTooltips: data.ifa.tooltips.slice(0, 15) 
+                    }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const index = items[0].dataIndex;
+                                    const faPerteneciente = items[0].dataset.customTooltips[index];
+                                    return `${items[0].label} (FA: ${faPerteneciente})`;
+                                },
+                                label: (item) => `Comisión: u$s ${formatoUSD(item.raw)}`
+                            }
+                        }
+                    }, 
+                    onClick: (e, els) => { if(els.length > 0) abrirModalIFA(graficosActivos.ifa.data.labels[els[0].index]); } 
+                }
             });
 
             graficosActivos.cliente = new Chart(document.getElementById('chartCliente').getContext('2d'), {
-                type: 'bar', data: { labels: data.cliente.labels, datasets: [{ data: data.cliente.values, backgroundColor: '#10b981', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(data.cliente.labels[els[0].index]); } }
+                type: 'bar', data: { labels: data.cliente.labels.slice(0, 15), datasets: [{ data: data.cliente.values.slice(0, 15), backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(graficosActivos.cliente.data.labels[els[0].index]); } }
             });
 
-            graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
-                type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: ['#9f1239', '#e11d48', '#f97316', '#3b82f6', '#1e3a8a', '#10b981', '#6366f1'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
-            });
+            if (vistaGlobalFA === 'EQUIPO') {
+                graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
+                    type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: ['#9f1239', '#e11d48', '#f97316', '#3b82f6', '#1e3a8a', '#10b981', '#6366f1'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
+                });
+            }
 
             graficosActivos.ticker = new Chart(document.getElementById('chartTicker').getContext('2d'), {
                 type: 'treemap',
@@ -241,25 +449,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
-
-        function cambiarSolapa(periodo) {
-            const btnMtd = document.getElementById('btn-mtd');
-            const btnYtd = document.getElementById('btn-ytd');
-            if(periodo === 'mtd') {
-                btnMtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
-                btnYtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
-            } else {
-                btnYtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
-                btnMtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
-            }
-            renderizarDashboard(periodo);
-        }
-
-        window.onload = () => {
-            if (typeof datosDashboard !== 'undefined') {
-                cambiarSolapa('mtd');
-            }
-        };
     </script>
 </body>
 </html>
