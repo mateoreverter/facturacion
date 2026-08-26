@@ -5,53 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Facturación | Team Sproviero</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
     <!-- Carga directa del archivo JS -->
     <script src="datos_facturacion.js"></script>
+    <style>
+        /* Ajustes base para scrollbars en modo oscuro */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans p-6 min-h-screen relative">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen relative">
     
     <!-- Modal Interactivo -->
-    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative">
-            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition z-10">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 relative">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-emerald-400 transition z-10 focus:outline-none">
+                <i class="fa-solid fa-xmark text-xl"></i>
             </button>
-            <h2 id="modalTitulo" class="text-2xl font-bold text-slate-800 mb-6 pr-8">Detalle</h2>
+            <h2 id="modalTitulo" class="text-2xl font-bold text-white mb-6 pr-8">Detalle</h2>
             
+            <!-- MODAL FA -->
             <div id="modalFA" class="hidden">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Top Productores del Equipo</h3>
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider"><i class="fa-solid fa-users text-sky-400 mr-2"></i>Top Productores del Equipo</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalFA"></canvas></div>
             </div>
 
             <!-- MODAL IFA -->
             <div id="modalIFA" class="hidden flex-col h-full">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 border-b border-slate-800 pb-4">
                     <div>
-                        <h3 class="text-sm font-bold text-slate-500 uppercase">Top Clientes del Productor</h3>
-                        <!-- Aca cambiamos a "FA:" -->
-                        <p id="lblModalFAEquipo" class="text-xs text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded inline-block"></p>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-user-tie text-emerald-400 mr-2"></i>Top Clientes del Productor</h3>
+                        <p id="lblModalFAEquipo" class="text-[10px] text-sky-400 font-bold mt-2 bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded inline-block"></p>
                     </div>
                     <div class="relative w-full md:w-64">
-                        <input type="text" id="buscadorClienteModal" oninput="filtrarGraficoClienteModal()" placeholder="Buscar cliente en este productor..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="buscadorClienteModal" oninput="filtrarGraficoClienteModal()" placeholder="Buscar cliente..." class="w-full text-xs bg-slate-950 border border-slate-700 text-white rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors">
                     </div>
                 </div>
                 <div class="relative h-[400px]"><canvas id="chartModalIFA"></canvas></div>
             </div>
 
+            <!-- MODAL CLIENTE -->
             <div id="modalCliente" class="hidden">
                 <div class="flex justify-end gap-2 mb-4">
-                    <button id="btnModalCliMTD" onclick="renderizarModalClienteGraficos('mtd')" class="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition">MTD</button>
-                    <button id="btnModalCliYTD" onclick="renderizarModalClienteGraficos('ytd')" class="bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition">YTD</button>
+                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs shrink-0">
+                        <button id="btnModalCliMTD" onclick="renderizarModalClienteGraficos('mtd')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow">MTD</button>
+                        <button id="btnModalCliYTD" onclick="renderizarModalClienteGraficos('ytd')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">YTD</button>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evolución de Facturación</h3>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider"><i class="fa-solid fa-chart-area text-blue-400 mr-2"></i>Evolución de Facturación</h3>
                         <div class="relative h-[300px]"><canvas id="chartModalClienteLinea"></canvas></div>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Composición por Ticker</h3>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider"><i class="fa-solid fa-chart-pie text-purple-400 mr-2"></i>Composición por Ticker</h3>
                         <div class="relative h-[300px] flex justify-center"><canvas id="chartModalClienteTicker"></canvas></div>
                     </div>
                 </div>
@@ -59,11 +71,11 @@
 
             <!-- MODAL TICKER DUAL -->
             <div id="modalTicker" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 id="lblModalTickerSub" class="text-sm font-bold text-slate-500 uppercase">Productores</h3>
-                    <div class="flex gap-2">
-                        <button id="btnTkIFA" onclick="renderizarGraficoTickerDual('ifa')" class="bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition">Productores</button>
-                        <button id="btnTkCli" onclick="renderizarGraficoTickerDual('cliente')" class="bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition">Clientes</button>
+                <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-4">
+                    <h3 id="lblModalTickerSub" class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-money-bill-transfer text-emerald-400 mr-2"></i>Productores</h3>
+                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs shrink-0">
+                        <button id="btnTkIFA" onclick="renderizarGraficoTickerDual('ifa')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow">Productores</button>
+                        <button id="btnTkCli" onclick="renderizarGraficoTickerDual('cliente')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Clientes</button>
                     </div>
                 </div>
                 <div class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
@@ -72,94 +84,115 @@
     </div>
 
     <!-- MAIN DASHBOARD -->
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
         
-        <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-300 pb-2 gap-4">
-            <div class="flex flex-col md:flex-row items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <label for="selectorFA" class="text-sm font-bold text-slate-600 uppercase">Equipo (FA):</label>
-                    <select id="selectorFA" onchange="cambiarVistaGlobal()" class="bg-white border border-slate-300 text-slate-700 font-semibold py-1.5 px-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="EQUIPO">EQUIPO</option>
-                    </select>
+        <!-- Navbar Superior (Al estilo Cashflows) -->
+        <header class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl mt-2">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <!-- Título y Estado -->
+                <div class="flex items-center gap-4">
+                    <div class="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400 hidden sm:block">
+                        <i class="fa-solid fa-chart-line text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-xl font-bold text-white tracking-wide">Monitor de Facturación</h1>
+                            <!-- Se reemplazó la etiqueta "Activo" por la fecha de actualización -->
+                            <span class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                                <i class="fa-solid fa-clock"></i>
+                                Actualizado al: <span id="lblActualizacion">--/--/----</span>
+                            </span>
+                        </div>
+                        <p id="lblPeriodo" class="text-xs text-slate-400 mt-1">Team Sproviero - Información MTD</p>
+                    </div>
                 </div>
-                <div class="flex gap-4">
-                    <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide disabled:opacity-50">MTD (Mes Actual)</button>
-                    <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide disabled:opacity-50">YTD (Año Corriente)</button>
-                </div>
-            </div>
-            
-            <div class="bg-amber-100 border border-amber-300 text-amber-800 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Actualizado al: <span id="lblActualizacion" class="font-bold">--/--/----</span>
-            </div>
-        </div>
 
-        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-5 rounded-xl shadow-sm border border-slate-200 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Dashboard de Facturación</h1>
-                <p id="lblPeriodo" class="text-slate-500 text-sm font-semibold">Team Sproviero</p>
+                <!-- Selectores y Pestañas -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase ml-1">Filtro de Equipo (FA)</label>
+                        <select id="selectorFA" onchange="cambiarVistaGlobal()" class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                            <option value="EQUIPO">EQUIPO</option>
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase ml-1 opacity-0 hidden sm:block">-</label>
+                        <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-sm">
+                            <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow">MTD (Mes)</button>
+                            <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">YTD (Año)</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full lg:w-auto">
-                <div class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md border border-blue-700">
-                    <p class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Facturación Total</p>
-                    <h2 class="text-2xl font-bold">u$s <span id="kpiTotal">0</span></h2>
+
+            <!-- KPIs Gerenciales -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800">
+                <div class="bg-blue-500/10 border border-blue-500/20 px-4 py-3 rounded-xl">
+                    <p class="text-[10px] text-blue-400 uppercase font-bold tracking-wider mb-1"><i class="fa-solid fa-sack-dollar mr-1.5"></i>Facturación Total</p>
+                    <h2 class="text-2xl font-bold text-white">u$s <span id="kpiTotal">0</span></h2>
                 </div>
-                <div class="bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-md border border-emerald-700">
-                    <p class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Run Rate</p>
-                    <h2 class="text-2xl font-bold">u$s <span id="kpiRunRate">0</span></h2>
+                <div class="bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl">
+                    <p class="text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1"><i class="fa-solid fa-rocket mr-1.5"></i>Run Rate</p>
+                    <h2 class="text-2xl font-bold text-white">u$s <span id="kpiRunRate">0</span></h2>
                 </div>
-                <div class="bg-purple-600 text-white px-4 py-3 rounded-lg shadow-md border border-purple-700">
-                    <p id="lblPlan" class="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Plan Objetivo</p>
-                    <h2 class="text-2xl font-bold">u$s <span id="kpiPlan">0</span></h2>
+                <div class="bg-purple-500/10 border border-purple-500/20 px-4 py-3 rounded-xl">
+                    <p id="lblPlan" class="text-[10px] text-purple-400 uppercase font-bold tracking-wider mb-1"><i class="fa-solid fa-bullseye mr-1.5"></i>Plan Objetivo</p>
+                    <h2 class="text-2xl font-bold text-white">u$s <span id="kpiPlan">0</span></h2>
                 </div>
-                <div class="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-md border border-slate-700">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">% Cumplimiento</p>
-                    <h2 class="text-2xl font-bold"><span id="kpiCumplimiento">0</span>%</h2>
+                <div class="bg-slate-800 border border-slate-700 px-4 py-3 rounded-xl">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1"><i class="fa-solid fa-percent mr-1.5"></i>Cumplimiento</p>
+                    <h2 class="text-2xl font-bold text-white"><span id="kpiCumplimiento">0</span>%</h2>
                 </div>
             </div>
         </header>
 
+        <!-- Gráficos Principales -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Productores (Click en barra) 🔍</h3>
-                    <div class="relative w-48">
-                        <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 border-b border-slate-800 pb-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-help" title="Haz clic en una barra para ver detalles"><i class="fa-solid fa-users text-sky-400 mr-2"></i>Top Productores</h3>
+                    <div class="relative w-full sm:w-48">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors">
                     </div>
                 </div>
                 <div class="relative h-[300px]"><canvas id="chartIFA"></canvas></div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase cursor-pointer">Top Clientes (Click en barra) 🔍</h3>
-                    <div class="relative w-48">
-                        <input type="text" id="buscadorCliente" oninput="filtrarGraficoCliente()" placeholder="Buscar cliente..." class="w-full text-xs bg-slate-50 border border-slate-300 text-slate-700 rounded-md px-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 border-b border-slate-800 pb-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-help" title="Haz clic en una barra para ver detalles"><i class="fa-solid fa-building-user text-emerald-400 mr-2"></i>Top Clientes</h3>
+                    <div class="relative w-full sm:w-48">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="buscadorCliente" oninput="filtrarGraficoCliente()" placeholder="Buscar cliente..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors">
                     </div>
                 </div>
                 <div class="relative h-[300px]"><canvas id="chartCliente"></canvas></div>
             </div>
 
-            <div id="boxFA" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Facturación por FA (Click en porción) 🔍</h3>
+            <div id="boxFA" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl transition">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-3 cursor-help" title="Haz clic en una porción para filtrar"><i class="fa-solid fa-sitemap text-purple-400 mr-2"></i>Facturación por Equipo (FA)</h3>
                 <div class="relative h-[300px] flex justify-center"><canvas id="chartFA"></canvas></div>
             </div>
             
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 cursor-pointer">Proporción por Ticker (Click en caja) 🔍</h3>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl transition">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-3 cursor-help" title="Haz clic en un cuadro para ver quién lo opera"><i class="fa-solid fa-cubes-stacked text-orange-400 mr-2"></i>Proporción por Ticker</h3>
                 <div class="relative h-[300px]"><canvas id="chartTicker"></canvas></div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evolución de Facturación</h3>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-3"><i class="fa-solid fa-chart-line text-emerald-400 mr-2"></i>Evolución de Facturación</h3>
             <div class="relative h-64"><canvas id="chartEvolucion"></canvas></div>
         </div>
     </div>
 
     <script>
+        // Configuración Global de Chart.js para Modo Oscuro
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#1e293b';
+
         const formatoUSD = (valor) => valor.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
         let graficosActivos = {}; 
         let modalCharts = {};
@@ -206,11 +239,11 @@
             const btnMtd = document.getElementById('btn-mtd');
             const btnYtd = document.getElementById('btn-ytd');
             if(periodo === 'mtd') {
-                btnMtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
-                btnYtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+                btnMtd.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnYtd.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             } else {
-                btnYtd.className = "text-blue-600 font-bold border-b-2 border-blue-600 px-4 py-2 transition tracking-wide";
-                btnMtd.className = "text-slate-500 font-semibold hover:text-blue-600 px-4 py-2 transition tracking-wide";
+                btnYtd.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnMtd.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             }
             document.getElementById('buscadorIFA').value = '';
             document.getElementById('buscadorCliente').value = '';
@@ -307,7 +340,7 @@
             if(!data) return;
             
             document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
-            document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
+            document.getElementById('lblModalFAEquipo').innerHTML = `<i class="fa-solid fa-users text-sky-400 mr-1.5"></i>FA: ${data.fa}`;
             document.getElementById('buscadorClienteModal').value = '';
             
             dataModalIFAOriginal.labels = data.labels;
@@ -334,11 +367,11 @@
             const btnY = document.getElementById('btnModalCliYTD');
             
             if(periodoVista === 'mtd') {
-                btnM.className = "bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition";
-                btnY.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition";
+                btnM.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnY.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             } else {
-                btnY.className = "bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition";
-                btnM.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1.5 rounded-md text-sm font-semibold transition";
+                btnY.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnM.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             }
 
             if(!data) {
@@ -351,18 +384,18 @@
             document.getElementById('modalTitulo').innerText = `Cliente: ${clienteAbiertoActual} (u$s ${formatoUSD(data.total)} en ${periodoVista.toUpperCase()})`;
             if(modalCharts.cliLinea) modalCharts.cliLinea.destroy();
             modalCharts.cliLinea = new Chart(document.getElementById('chartModalClienteLinea').getContext('2d'), {
-                type: 'line', data: { labels: data.fechas.labels, datasets: [{ label: 'USD', data: data.fechas.values, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                type: 'line', data: { labels: data.fechas.labels, datasets: [{ label: 'USD', data: data.fechas.values, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
             if(modalCharts.cliTicker) modalCharts.cliTicker.destroy();
             modalCharts.cliTicker = new Chart(document.getElementById('chartModalClienteTicker').getContext('2d'), {
-                type: 'doughnut', data: { labels: data.ticker.map(t=>t.t), datasets: [{ data: data.ticker.map(t=>t.v), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f97316'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                type: 'doughnut', data: { labels: data.ticker.map(t=>t.t), datasets: [{ data: data.ticker.map(t=>t.v), backgroundColor: ['#0284c7', '#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#f97316'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } } }
             });
         }
 
-        // SISTEMA DUAL DE TICKER (IFA vs Cliente)
+        // SISTEMA DUAL DE TICKER
         function abrirModalTicker(tickerName) {
             tickerAbiertoActual = tickerName;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
@@ -377,16 +410,16 @@
             const dataToRender = vista === 'ifa' ? dataObj.ifa : dataObj.cliente;
             const bgColor = vista === 'ifa' ? '#8b5cf6' : '#10b981';
             
-            document.getElementById('lblModalTickerSub').innerText = vista === 'ifa' ? 'Top Productores operando este Ticker' : 'Top Clientes operando este Ticker';
+            document.getElementById('lblModalTickerSub').innerHTML = vista === 'ifa' ? '<i class="fa-solid fa-users text-purple-400 mr-2"></i>Top Productores operando este Ticker' : '<i class="fa-solid fa-building-user text-emerald-400 mr-2"></i>Top Clientes operando este Ticker';
 
             const btnI = document.getElementById('btnTkIFA');
             const btnC = document.getElementById('btnTkCli');
             if(vista === 'ifa') {
-                btnI.className = "bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition";
-                btnC.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition";
+                btnI.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnC.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             } else {
-                btnC.className = "bg-blue-600 text-white px-4 py-1 rounded-md text-sm font-bold shadow-sm transition";
-                btnI.className = "bg-slate-200 text-slate-600 hover:bg-slate-300 px-4 py-1 rounded-md text-sm font-semibold transition";
+                btnC.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-emerald-400 bg-slate-800 shadow";
+                btnI.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white";
             }
 
             if(modalCharts.ticker) modalCharts.ticker.destroy();
@@ -421,11 +454,11 @@
             document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
             
             if (periodoActual === 'mtd') {
-                document.getElementById('lblPlan').innerText = "Plan Mensual";
+                document.getElementById('lblPlan').innerHTML = '<i class="fa-solid fa-bullseye mr-1.5"></i>Plan Mensual';
                 document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
                 document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
             } else {
-                document.getElementById('lblPlan').innerText = "Plan Anual";
+                document.getElementById('lblPlan').innerHTML = '<i class="fa-solid fa-calendar-check mr-1.5"></i>Plan Anual';
                 document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
                 document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_ytd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
             }
@@ -439,29 +472,13 @@
                 type: 'bar', 
                 data: { 
                     labels: data.ifa.labels.slice(0, 15), 
-                    datasets: [{ 
-                        data: data.ifa.values.slice(0, 15), 
-                        backgroundColor: '#3b82f6', 
-                        borderRadius: 4, 
-                        customTooltips: data.ifa.tooltips.slice(0, 15) 
-                    }] 
+                    datasets: [{ data: data.ifa.values.slice(0, 15), backgroundColor: '#3b82f6', borderRadius: 4, customTooltips: data.ifa.tooltips.slice(0, 15) }] 
                 },
                 options: { 
-                    indexAxis: 'y', 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
                     plugins: { 
                         legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: (items) => {
-                                    const index = items[0].dataIndex;
-                                    const faPerteneciente = items[0].dataset.customTooltips[index];
-                                    return `${items[0].label} (FA: ${faPerteneciente})`;
-                                },
-                                label: (item) => `Comisión: u$s ${formatoUSD(item.raw)}`
-                            }
-                        }
+                        tooltip: { callbacks: { title: (items) => `${items[0].label} (FA: ${items[0].dataset.customTooltips[items[0].dataIndex]})`, label: (item) => `Comisión: u$s ${formatoUSD(item.raw)}` } }
                     }, 
                     onClick: (e, els) => { if(els.length > 0) abrirModalIFA(graficosActivos.ifa.data.labels[els[0].index]); } 
                 }
@@ -474,27 +491,26 @@
 
             if (vistaGlobalFA === 'EQUIPO') {
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
-                    type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: ['#9f1239', '#e11d48', '#f97316', '#3b82f6', '#1e3a8a', '#10b981', '#6366f1'] }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
+                    type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: ['#0284c7', '#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
                 });
             }
 
             graficosActivos.ticker = new Chart(document.getElementById('chartTicker').getContext('2d'), {
                 type: 'treemap',
-                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 1, borderWidth: 1, borderColor: '#ffffff', backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; const p = ['#69b3a2', '#407f7f', '#ff9e9d', '#ff3d68', '#a8d8ea', '#aa96da', '#fcbad3', '#3b82f6', '#f59e0b']; return p[ctx.dataIndex % p.length]; }, 
+                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 1, borderWidth: 1, borderColor: '#0f172a', backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; const p = ['#0284c7', '#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#eab308']; return p[ctx.dataIndex % p.length]; }, 
                 labels: { display: true, formatter: (ctx) => {
                     if (ctx.type !== 'data') return [];
                     const sum = ctx.chart.data.datasets[0].tree.reduce((acc, item) => acc + item.v, 0);
                     const pct = ((ctx.raw.v / sum) * 100).toFixed(1) + "%";
                     return [ctx.raw.g, "$" + formatoUSD(ctx.raw.v), pct];
                 }, color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
-                
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } }
             });
 
             graficosActivos.evolucion = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
-                type: 'line', data: { labels: data.fechas.labels, datasets: [{ data: data.fechas.values, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                type: 'line', data: { labels: data.fechas.labels, datasets: [{ data: data.fechas.values, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
     </script>
