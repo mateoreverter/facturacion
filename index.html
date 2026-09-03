@@ -324,6 +324,18 @@
         let dataClienteOriginal = { labels: [], values: [] };
         let dataModalIFAOriginal = { labels: [], values: [] };
 
+        function filtrarClientesIdentificados(data) {
+            const resultado = { labels: [], values: [] };
+            (data?.labels || []).forEach((cliente, i) => {
+                const nombreNormalizado = String(cliente || '').trim().toLowerCase();
+                if (nombreNormalizado && nombreNormalizado !== 'sin cliente') {
+                    resultado.labels.push(cliente);
+                    resultado.values.push(data.values[i]);
+                }
+            });
+            return resultado;
+        }
+
         window.onload = () => {
             if (typeof datosDashboard !== 'undefined') {
                 document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
@@ -451,19 +463,20 @@
         function abrirModalIFA(ifaName) {
             const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ifa_detalles[ifaName];
             if(!data) return;
+            const clientesIdentificados = filtrarClientesIdentificados(data);
             
             document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
             document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
             document.getElementById('buscadorClienteModal').value = '';
             
-            dataModalIFAOriginal.labels = data.labels;
-            dataModalIFAOriginal.values = data.values;
+            dataModalIFAOriginal.labels = clientesIdentificados.labels;
+            dataModalIFAOriginal.values = clientesIdentificados.values;
 
             mostrarSeccionModal('modalIFA');
             if(modalCharts.ifa) modalCharts.ifa.destroy();
             
             modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
-                type: 'bar', data: { labels: data.labels.slice(0, 15), datasets: [{ data: data.values.slice(0, 15), backgroundColor: COLORES.emerald, borderRadius: 5 }] },
+                type: 'bar', data: { labels: clientesIdentificados.labels.slice(0, 15), datasets: [{ data: clientesIdentificados.values.slice(0, 15), backgroundColor: COLORES.emerald, borderRadius: 5 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(modalCharts.ifa.data.labels[els[0].index]); } }
             });
         }
@@ -515,7 +528,7 @@
             const dataObj = datosDashboard.vistas[vistaGlobalFA][periodoActual].ticker_detalles[tickerAbiertoActual];
             if(!dataObj) return;
 
-            const dataToRender = vista === 'ifa' ? dataObj.ifa : dataObj.cliente;
+            const dataToRender = vista === 'ifa' ? dataObj.ifa : filtrarClientesIdentificados(dataObj.cliente);
             const bgColor = vista === 'ifa' ? COLORES.cyan : COLORES.emerald;
             
             document.getElementById('lblModalTickerSub').innerText = vista === 'ifa' ? 'Top Productores operando este Ticker' : 'Top Clientes operando este Ticker';
@@ -550,8 +563,9 @@
             dataIFAOriginal.values = data.ifa.values;
             dataIFAOriginal.tooltips = data.ifa.tooltips;
             
-            dataClienteOriginal.labels = data.cliente.labels;
-            dataClienteOriginal.values = data.cliente.values;
+            const clientesIdentificados = filtrarClientesIdentificados(data.cliente);
+            dataClienteOriginal.labels = clientesIdentificados.labels;
+            dataClienteOriginal.values = clientesIdentificados.values;
             
             document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
             document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
@@ -573,7 +587,8 @@
                 document.getElementById('lblPlan').innerText = "Plan Anual";
                 document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
                 document.getElementById('lblPlanDetalle').innerText = "Objetivo anual 2026";
-                document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_ytd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
+                document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
             }
 
@@ -615,7 +630,7 @@
             });
 
             graficosActivos.cliente = new Chart(document.getElementById('chartCliente').getContext('2d'), {
-                type: 'bar', data: { labels: data.cliente.labels.slice(0, 15), datasets: [{ data: data.cliente.values.slice(0, 15), backgroundColor: COLORES.green, borderRadius: 5 }] },
+                type: 'bar', data: { labels: dataClienteOriginal.labels.slice(0, 15), datasets: [{ data: dataClienteOriginal.values.slice(0, 15), backgroundColor: COLORES.green, borderRadius: 5 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(graficosActivos.cliente.data.labels[els[0].index]); } }
             });
 
