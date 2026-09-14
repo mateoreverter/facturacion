@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Facturación | Team Sproviero</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
+    <!-- Plugin para inyectar valores adentro del gráfico Doughnut -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <!-- Carga directa del archivo JS -->
     <script src="datos_facturacion.js"></script>
     <style>
@@ -161,7 +164,6 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <div>
                         <h3 class="section-heading">Top Clientes del Productor</h3>
-                        <!-- Aca cambiamos a "FA:" -->
                         <p id="lblModalFAEquipo" class="context-badge"></p>
                     </div>
                     <div class="relative w-full md:w-64">
@@ -311,7 +313,10 @@
         </div>
 
         <section class="chart-panel">
-            <div class="chart-header"><h3 id="lblEvolucion" class="section-heading heading-emerald"><span class="heading-icon">⌁</span>Evolución de Facturación</h3></div>
+            <div class="chart-header">
+                <h3 id="lblEvolucion" class="section-heading heading-emerald"><span class="heading-icon">⌁</span>Evolución de Facturación</h3>
+            </div>
+            <p id="lblEvolucionAviso" class="text-[10px] text-amber-400 font-bold mb-4 hidden">* El punto amarillo proyecta el Run Rate del mes en curso.</p>
             <div class="relative h-64"><canvas id="chartEvolucion"></canvas></div>
         </section>
     </main>
@@ -345,6 +350,10 @@
         Chart.defaults.scale.grid.color = COLORES.grid;
         Chart.defaults.scale.border.color = '#334155';
 
+        // Registramos el plugin Datalabels globalmente pero lo apagamos por defecto.
+        Chart.register(ChartDataLabels);
+        Chart.defaults.plugins.datalabels.display = false;
+
         let graficosActivos = {}; 
         let modalCharts = {};
         
@@ -373,6 +382,19 @@
 
         function esFAHistorico(fa) {
             return FAS_HISTORICOS.has(String(fa || '').trim().toLowerCase());
+        }
+
+        function filtrarFAsParaGrafico(dataFA) {
+            const resultado = { labels: [], values: [] };
+            const historicoSeleccionado = esFAHistorico(vistaGlobalFA) ? vistaGlobalFA : null;
+
+            (dataFA?.labels || []).forEach((fa, i) => {
+                if (!esFAHistorico(fa) || fa === historicoSeleccionado) {
+                    resultado.labels.push(fa);
+                    resultado.values.push(dataFA.values[i]);
+                }
+            });
+            return resultado;
         }
 
         function crearOpcionFA(fa, historico = false) {
@@ -472,7 +494,7 @@
 
         function cambiarVistaGlobal() {
             vistaGlobalFA = document.getElementById('selectorFA').value;
-            if (vistaGlobalFA === 'EQUIPO') {
+            if (vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA)) {
                 document.getElementById('boxFA').classList.remove('hidden');
             } else {
                 document.getElementById('boxFA').classList.add('hidden');
@@ -634,7 +656,6 @@
             });
         }
 
-        // SISTEMA DUAL DE TICKER (IFA vs Cliente)
         function abrirModalTicker(tickerName) {
             tickerAbiertoActual = tickerName;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
@@ -699,6 +720,7 @@
                 document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
                 document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('lblCumplimientoDetalle').innerText = `run rate vs. plan ${data.mes_plan || 'mensual'}`;
+                document.getElementById('lblEvolucionAviso').classList.add('hidden');
             } else {
                 kpiRunRateCard.classList.add('hidden');
                 kpiGrid.classList.add('is-ytd');
@@ -708,6 +730,7 @@
                 const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
                 document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
+                document.getElementById('lblEvolucionAviso').classList.remove('hidden');
             }
 
             const tituloEquipo = vistaGlobalFA === 'EQUIPO' ? 'Team Sproviero' : `Equipo: ${vistaGlobalFA}`;
@@ -752,10 +775,38 @@
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(graficosActivos.cliente.data.labels[els[0].index]); } }
             });
 
-            if (vistaGlobalFA === 'EQUIPO') {
+            if (vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA)) {
+                const datosEquipo = datosDashboard.vistas.EQUIPO[periodoActual];
+                const datosFAGrafico = filtrarFAsParaGrafico(datosEquipo.fa);
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
-                    type: 'doughnut', data: { labels: data.fa.labels, datasets: [{ data: data.fa.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (e, els) => { if(els.length > 0) abrirModalFA(data.fa.labels[els[0].index]); } }
+                    type: 'doughnut', 
+                    plugins: [ChartDataLabels],
+                    data: { labels: datosFAGrafico.labels, datasets: [{ data: datosFAGrafico.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'right' },
+                            datalabels: {
+                                display: function(context) {
+                                    let value = context.dataset.data[context.dataIndex];
+                                    let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    return (value / sum) > 0.04; 
+                                },
+                                color: '#ffffff',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: (value) => '$ ' + formatoUSD(value),
+                                anchor: 'center',
+                                align: 'center'
+                            }
+                        },
+                        onClick: (e, els) => {
+                            if (els.length === 0) return;
+                            const faElegido = graficosActivos.fa.data.labels[els[0].index];
+                            if (esFAHistorico(vistaGlobalFA)) seleccionarFA(faElegido);
+                            else abrirModalFA(faElegido);
+                        }
+                    }
                 });
             }
 
@@ -769,15 +820,46 @@
                     return [ctx.raw.g, "$" + formatoUSD(ctx.raw.v), pct];
                 }, color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
                 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: () => null,
+                                label: (item) => {
+                                    const dataset = item.chart.data.datasets[item.datasetIndex];
+                                    const sum = dataset.tree.reduce((acc, curr) => acc + curr.v, 0);
+                                    const pct = ((item.raw.v / sum) * 100).toFixed(1) + "%";
+                                    return `${item.raw.g}: u$s ${formatoUSD(item.raw.v)} (${pct})`;
+                                }
+                            }
+                        }
+                    }, 
+                    onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } 
+                }
             });
+
+            const mesActualIndex = (data.mes_actual_num || 1) - 1;
 
             const datasetsEvolucion = [{
                 label: 'Facturación',
                 data: data.fechas.values,
                 borderColor: COLORES.emerald,
                 backgroundColor: 'rgba(52, 211, 153, 0.10)',
-                pointBackgroundColor: COLORES.emerald,
+                pointBackgroundColor: (ctx) => {
+                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return COLORES.amber;
+                    return COLORES.emerald;
+                },
+                pointRadius: (ctx) => {
+                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return 5;
+                    return 3;
+                },
+                pointBorderColor: (ctx) => {
+                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return '#ffffff';
+                    return COLORES.emerald;
+                },
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3
@@ -809,7 +891,17 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: periodoActual === 'ytd', position: 'top' },
-                        tooltip: { callbacks: { label: (item) => `${item.dataset.label}: u$s ${formatoUSD(item.raw)}` } }
+                        tooltip: { 
+                            callbacks: { 
+                                label: (item) => {
+                                    let labelText = item.dataset.label;
+                                    if (periodoActual === 'ytd' && item.dataset.label === 'Facturación' && item.dataIndex === mesActualIndex) {
+                                        labelText = 'Run Rate Proyectado';
+                                    }
+                                    return `${labelText}: u$s ${formatoUSD(item.raw)}`;
+                                }
+                            } 
+                        }
                     }
                 }
             });
