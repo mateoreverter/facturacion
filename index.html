@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Facturación | Team Sproviero</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
-    <!-- Plugin para inyectar valores adentro del gráfico Doughnut -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <!-- Carga directa del archivo JS -->
     <script src="datos_facturacion.js"></script>
     <style>
@@ -47,15 +44,24 @@
         .search-control::placeholder { color: #64748b; }
         .select-control option { background: #0f172a; color: #e2e8f0; }
         .fa-select { position: relative; width: 210px; }
+        .ifa-select { width: 270px; }
         .fa-select-trigger { width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; color: #f8fafc; background: #020617; border: 1px solid #334155; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; transition: border-color .18s, box-shadow .18s; }
+        .fa-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .fa-select-trigger:hover, .fa-select-trigger[aria-expanded="true"] { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
         .fa-select-trigger svg { width: 15px; height: 15px; color: #cbd5e1; transition: transform .18s; }
         .fa-select-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
         .fa-menu { position: absolute; top: calc(100% + 7px); left: 0; z-index: 80; width: 100%; max-height: 330px; overflow-y: auto; padding: 6px; background: #0b1220; border: 1px solid #334155; border-radius: 11px; box-shadow: 0 18px 45px rgba(0,0,0,.42); }
-        .fa-option, .fa-history-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; cursor: pointer; text-align: left; }
-        .fa-option { min-height: 34px; padding: 8px 9px; color: #cbd5e1; background: transparent; border-radius: 7px; font-size: 13px; }
-        .fa-option:hover { color: #f8fafc; background: #172033; }
-        .fa-option.active { color: #34d399; background: rgba(16,185,129,.10); font-weight: 750; }
+        .fa-option, .ifa-option, .fa-history-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; cursor: pointer; text-align: left; }
+        .fa-option, .ifa-option { min-height: 34px; padding: 8px 9px; color: #cbd5e1; background: transparent; border-radius: 7px; font-size: 13px; }
+        .ifa-option { justify-content: flex-start; }
+        .fa-option:hover, .ifa-option:hover { color: #f8fafc; background: #172033; }
+        .fa-option.active, .ifa-option.active { color: #34d399; background: rgba(16,185,129,.10); font-weight: 750; }
+        .ifa-option-marker { width: 17px; height: 17px; display: grid; place-items: center; flex: 0 0 auto; color: transparent; border: 1px solid #475569; border-radius: 5px; font-size: 11px; font-weight: 900; }
+        .ifa-option.active .ifa-option-marker { color: #052e2b; background: #34d399; border-color: #34d399; }
+        .ifa-option-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .selector-menu-search { position: sticky; top: -6px; z-index: 2; margin: -6px -6px 5px; padding: 7px; background: #0b1220; border-bottom: 1px solid #1e293b; }
+        .selector-menu-search .search-control { padding-block: 7px; }
+        .selector-empty { padding: 12px 9px; color: #64748b; font-size: 12px; text-align: center; }
         .fa-history-section { margin-top: 5px; padding-top: 5px; border-top: 1px solid #1e293b; }
         .fa-history-toggle { min-height: 34px; padding: 8px 9px; color: #94a3b8; background: transparent; border-radius: 7px; font-size: 11px; font-weight: 800; letter-spacing: .045em; text-transform: uppercase; }
         .fa-history-toggle:hover { color: #e2e8f0; background: #172033; }
@@ -72,7 +78,7 @@
 
         .top-panel { padding: 27px 20px 20px; }
         .top-row { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
-        .top-controls { display: flex; align-items: end; gap: 16px; }
+        .top-controls { display: flex; align-items: end; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
         .updated-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; color: #34d399; background: rgba(16,185,129,.09); border: 1px solid rgba(16,185,129,.36); border-radius: 4px; font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: .025em; white-space: nowrap; }
         .updated-badge strong { color: #34d399; }
         .top-divider { height: 1px; margin: 28px 0 24px; background: #1e293b; }
@@ -135,7 +141,7 @@
             .control-panel { align-items: stretch; }
             .control-group, .field-block { width: 100%; }
             .select-control { width: 100%; }
-            .fa-select { width: 100%; }
+            .fa-select, .ifa-select { width: 100%; }
             .segmented-control { width: 100%; }
             .period-button { flex: 1; }
             .kpi-grid, .kpi-grid.is-ytd { grid-template-columns: 1fr; }
@@ -164,6 +170,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <div>
                         <h3 class="section-heading">Top Clientes del Productor</h3>
+                        <!-- Aca cambiamos a "FA:" -->
                         <p id="lblModalFAEquipo" class="context-badge"></p>
                     </div>
                     <div class="relative w-full md:w-64">
@@ -247,6 +254,23 @@
                             </div>
                         </div>
                     </div>
+                    <div class="field-block">
+                        <span id="lblSelectorIFA" class="field-label">Filtro de asesor (IFA)</span>
+                        <div id="selectorIFAControl" class="fa-select ifa-select">
+                            <input id="selectorIFA" type="hidden" value="__TODOS__">
+                            <button id="selectorIFATrigger" type="button" class="fa-select-trigger" aria-labelledby="lblSelectorIFA selectorIFAValor" aria-haspopup="listbox" aria-expanded="false" onclick="alternarMenuIFA(event)">
+                                <span id="selectorIFAValor">TODOS LOS IFAs</span>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div id="selectorIFAMenu" class="fa-menu hidden" role="listbox" aria-multiselectable="true" aria-labelledby="lblSelectorIFA">
+                                <div class="selector-menu-search" onclick="event.stopPropagation()">
+                                    <input id="buscadorSelectorIFA" type="search" class="search-control" placeholder="Buscar asesor..." autocomplete="off" oninput="filtrarOpcionesIFA()">
+                                </div>
+                                <div id="selectorIFAOpciones"></div>
+                                <div id="selectorIFASinResultados" class="selector-empty hidden">No se encontraron asesores</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="segmented-control period-control">
                         <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="period-button active">MTD (Mes)</button>
                         <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="period-button">YTD (Año)</button>
@@ -292,7 +316,7 @@
 
             <section class="chart-panel flex flex-col">
                 <div class="chart-header">
-                    <h3 class="section-heading heading-emerald"><span class="heading-icon">▦</span>Top Clientes</h3>
+                    <h3 class="section-heading heading-emerald"><span class="heading-icon">▦</span><span id="lblTopClientes">Top Clientes</span></h3>
                     <div class="search-wrapper">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
                         <input type="text" id="buscadorCliente" oninput="filtrarGraficoCliente()" placeholder="Buscar cliente..." class="search-control">
@@ -307,16 +331,13 @@
             </section>
             
             <section class="chart-panel">
-                <div class="chart-header"><h3 class="section-heading heading-amber"><span class="heading-icon">▦</span>Proporción por Ticker</h3></div>
+                <div class="chart-header"><h3 class="section-heading heading-amber"><span class="heading-icon">▦</span><span id="lblTicker">Proporción por Ticker</span></h3></div>
                 <div class="relative h-[300px]"><canvas id="chartTicker"></canvas></div>
             </section>
         </div>
 
         <section class="chart-panel">
-            <div class="chart-header">
-                <h3 id="lblEvolucion" class="section-heading heading-emerald"><span class="heading-icon">⌁</span>Evolución de Facturación</h3>
-            </div>
-            <p id="lblEvolucionAviso" class="text-[10px] text-amber-400 font-bold mb-4 hidden">* El punto amarillo proyecta el Run Rate del mes en curso.</p>
+            <div class="chart-header"><h3 class="section-heading heading-emerald"><span class="heading-icon">⌁</span><span id="lblEvolucion">Evolución de Facturación</span></h3></div>
             <div class="relative h-64"><canvas id="chartEvolucion"></canvas></div>
         </section>
     </main>
@@ -350,15 +371,86 @@
         Chart.defaults.scale.grid.color = COLORES.grid;
         Chart.defaults.scale.border.color = '#334155';
 
-        // Registramos el plugin Datalabels globalmente pero lo apagamos por defecto.
-        Chart.register(ChartDataLabels);
-        Chart.defaults.plugins.datalabels.display = false;
+        const etiquetasMontosFA = {
+            id: 'etiquetasMontosFA',
+            afterDatasetsDraw(chart, args, opciones) {
+                if (!opciones?.display || chart.config.type !== 'doughnut') return;
+
+                const meta = chart.getDatasetMeta(0);
+                const valores = chart.data.datasets[0].data;
+                const grupos = { left: [], right: [] };
+
+                meta.data.forEach((arco, indice) => {
+                    if (arco.hidden || !Number.isFinite(Number(valores[indice]))) return;
+                    const angulo = (arco.startAngle + arco.endAngle) / 2;
+                    const lado = Math.cos(angulo) >= 0 ? 'right' : 'left';
+                    grupos[lado].push({
+                        arco,
+                        angulo,
+                        indice,
+                        yObjetivo: arco.y + Math.sin(angulo) * (arco.outerRadius + 16)
+                    });
+                });
+
+                const limiteSuperior = chart.chartArea.top + 8;
+                const limiteInferior = chart.chartArea.bottom - 8;
+                const separacion = 17;
+
+                Object.values(grupos).forEach(items => {
+                    items.sort((a, b) => a.yObjetivo - b.yObjetivo);
+                    items.forEach((item, indice) => {
+                        const minimo = indice === 0 ? limiteSuperior : items[indice - 1].y + separacion;
+                        item.y = Math.max(minimo, Math.min(item.yObjetivo, limiteInferior));
+                    });
+
+                    for (let indice = items.length - 1; indice >= 0; indice--) {
+                        const maximo = indice === items.length - 1
+                            ? limiteInferior
+                            : items[indice + 1].y - separacion;
+                        items[indice].y = Math.min(items[indice].y, maximo);
+                    }
+                });
+
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.font = '700 10px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 1;
+                ctx.textBaseline = 'middle';
+
+                [...grupos.left, ...grupos.right].forEach(item => {
+                    const { arco, angulo, indice, y } = item;
+                    const direccion = Math.cos(angulo) >= 0 ? 1 : -1;
+                    const xInicio = arco.x + Math.cos(angulo) * (arco.outerRadius - 2);
+                    const yInicio = arco.y + Math.sin(angulo) * (arco.outerRadius - 2);
+                    const xCodo = arco.x + direccion * (arco.outerRadius + 11);
+                    const xTexto = arco.x + direccion * (arco.outerRadius + 28);
+
+                    ctx.beginPath();
+                    ctx.moveTo(xInicio, yInicio);
+                    ctx.lineTo(xCodo, y);
+                    ctx.lineTo(xTexto - direccion * 4, y);
+                    ctx.stroke();
+
+                    ctx.textAlign = direccion > 0 ? 'left' : 'right';
+                    ctx.fillText(`u$s ${formatoUSD(Number(valores[indice]))}`, xTexto, y);
+                });
+
+                ctx.restore();
+            }
+        };
+
+        Chart.register(etiquetasMontosFA);
 
         let graficosActivos = {}; 
         let modalCharts = {};
         
         let periodoActual = 'mtd';
         let vistaGlobalFA = 'EQUIPO'; 
+        const IFA_TODOS = '__TODOS__';
+        let ifasSeleccionados = new Set();
+        let listaIFAsSelector = [];
         let clienteAbiertoActual = ''; 
         let tickerAbiertoActual = '';
         
@@ -448,8 +540,217 @@
             document.getElementById('btnFAHistoricos').classList.toggle('expanded', historicosFAVisibles);
         }
 
+        function normalizarBusqueda(valor) {
+            return String(valor || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .toLowerCase();
+        }
+
+        function obtenerIFAsDisponibles() {
+            const vista = datosDashboard.vistas[vistaGlobalFA];
+            const nombres = new Set();
+
+            ['mtd', 'ytd'].forEach(periodo => {
+                (vista?.[periodo]?.ifa?.labels || []).forEach(ifa => nombres.add(String(ifa)));
+            });
+
+            return Array.from(nombres).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+        }
+
+        function crearOpcionIFA(ifa, etiqueta = ifa) {
+            const opcion = document.createElement('button');
+            opcion.type = 'button';
+            opcion.className = 'ifa-option';
+            opcion.dataset.value = ifa;
+            opcion.setAttribute('role', 'option');
+
+            const marcador = document.createElement('span');
+            marcador.className = 'ifa-option-marker';
+            marcador.innerText = '✓';
+            marcador.setAttribute('aria-hidden', 'true');
+
+            const nombre = document.createElement('span');
+            nombre.className = 'ifa-option-label';
+            nombre.innerText = etiqueta;
+
+            opcion.append(marcador, nombre);
+            opcion.addEventListener('click', (event) => {
+                event.stopPropagation();
+                seleccionarIFA(ifa);
+            });
+            return opcion;
+        }
+
+        function renderizarOpcionesIFA() {
+            const texto = normalizarBusqueda(document.getElementById('buscadorSelectorIFA').value);
+            const opciones = [];
+            const etiquetaTodos = 'TODOS LOS IFAs';
+
+            if (!texto || normalizarBusqueda(etiquetaTodos).includes(texto)) {
+                opciones.push(crearOpcionIFA(IFA_TODOS, etiquetaTodos));
+            }
+
+            listaIFAsSelector
+                .filter(ifa => normalizarBusqueda(ifa).includes(texto))
+                .forEach(ifa => opciones.push(crearOpcionIFA(ifa)));
+
+            document.getElementById('selectorIFAOpciones').replaceChildren(...opciones);
+            document.getElementById('selectorIFASinResultados').classList.toggle('hidden', opciones.length > 0);
+            actualizarEstadoSelectorIFA();
+        }
+
+        function actualizarSelectorIFA(reiniciar = false) {
+            listaIFAsSelector = obtenerIFAsDisponibles();
+            if (reiniciar) {
+                ifasSeleccionados.clear();
+            } else {
+                ifasSeleccionados = new Set(
+                    Array.from(ifasSeleccionados).filter(ifa => listaIFAsSelector.includes(ifa))
+                );
+            }
+
+            actualizarTextoSelectorIFA();
+            document.getElementById('buscadorSelectorIFA').value = '';
+            renderizarOpcionesIFA();
+        }
+
+        function obtenerIFAsSeleccionados() {
+            return Array.from(ifasSeleccionados);
+        }
+
+        function obtenerEtiquetaIFAsSeleccionados() {
+            const seleccionados = obtenerIFAsSeleccionados();
+            if (seleccionados.length === 0) return 'TODOS LOS IFAs';
+            if (seleccionados.length === 1) return seleccionados[0];
+            return `${seleccionados.length} IFAs seleccionados`;
+        }
+
+        function actualizarTextoSelectorIFA() {
+            const etiqueta = obtenerEtiquetaIFAsSeleccionados();
+            document.getElementById('selectorIFA').value = ifasSeleccionados.size
+                ? obtenerIFAsSeleccionados().join('|')
+                : IFA_TODOS;
+            document.getElementById('selectorIFAValor').innerText = etiqueta;
+        }
+
+        function actualizarEstadoSelectorIFA() {
+            document.querySelectorAll('.ifa-option').forEach(opcion => {
+                const valor = opcion.dataset.value;
+                const activa = valor === IFA_TODOS
+                    ? ifasSeleccionados.size === 0
+                    : ifasSeleccionados.has(valor);
+                opcion.classList.toggle('active', activa);
+                opcion.setAttribute('aria-selected', activa ? 'true' : 'false');
+            });
+        }
+
+        function alternarMenuIFA(event) {
+            event.stopPropagation();
+            cerrarMenuFA();
+            const menu = document.getElementById('selectorIFAMenu');
+            const abrir = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden', !abrir);
+            document.getElementById('selectorIFATrigger').setAttribute('aria-expanded', abrir ? 'true' : 'false');
+
+            if (abrir) {
+                document.getElementById('buscadorSelectorIFA').value = '';
+                renderizarOpcionesIFA();
+                setTimeout(() => document.getElementById('buscadorSelectorIFA').focus(), 0);
+            }
+        }
+
+        function filtrarOpcionesIFA() {
+            renderizarOpcionesIFA();
+        }
+
+        function cerrarMenuIFA() {
+            document.getElementById('selectorIFAMenu').classList.add('hidden');
+            document.getElementById('selectorIFATrigger').setAttribute('aria-expanded', 'false');
+        }
+
+        function seleccionarIFA(ifa) {
+            if (ifa === IFA_TODOS) {
+                ifasSeleccionados.clear();
+            } else if (ifasSeleccionados.has(ifa)) {
+                ifasSeleccionados.delete(ifa);
+            } else {
+                ifasSeleccionados.add(ifa);
+            }
+
+            actualizarTextoSelectorIFA();
+            actualizarEstadoSelectorIFA();
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
+        }
+
+        function obtenerDetalleIFA(periodo = periodoActual) {
+            const seleccionados = obtenerIFAsSeleccionados();
+            if (seleccionados.length === 0) return null;
+
+            const detallesDisponibles = datosDashboard.vistas[vistaGlobalFA]?.[periodo]?.ifa_detalles || {};
+            const detalles = seleccionados
+                .map(ifa => detallesDisponibles[ifa])
+                .filter(Boolean);
+
+            if (detalles.length === 0) {
+                return {
+                    labels: [], values: [], total: 0, run_rate: 0,
+                    fechas: { labels: [], values: [] }, ticker: []
+                };
+            }
+
+            const clientes = new Map();
+            const tickers = new Map();
+            const fechas = new Map();
+
+            detalles.forEach(detalle => {
+                (detalle.labels || []).forEach((cliente, i) => {
+                    clientes.set(cliente, (clientes.get(cliente) || 0) + Number(detalle.values?.[i] || 0));
+                });
+                (detalle.ticker || []).forEach(item => {
+                    tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0));
+                });
+                (detalle.fechas?.labels || []).forEach((fecha, i) => {
+                    const acumulado = fechas.get(fecha) || { total: 0, tieneValor: false };
+                    const valor = detalle.fechas?.values?.[i];
+                    if (valor !== null && valor !== undefined && Number.isFinite(Number(valor))) {
+                        acumulado.total += Number(valor);
+                        acumulado.tieneValor = true;
+                    }
+                    fechas.set(fecha, acumulado);
+                });
+            });
+
+            const clientesOrdenados = Array.from(clientes.entries()).sort((a, b) => b[1] - a[1]);
+            const tickersOrdenados = Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]);
+            const ordenMeses = new Map(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((mes, i) => [normalizarBusqueda(mes), i]));
+            const fechasOrdenadas = Array.from(fechas.entries()).sort((a, b) => {
+                if (periodo === 'ytd') {
+                    return (ordenMeses.get(normalizarBusqueda(a[0])) ?? 99) - (ordenMeses.get(normalizarBusqueda(b[0])) ?? 99);
+                }
+                const [diaA = 0, mesA = 0] = String(a[0]).split('/').map(Number);
+                const [diaB = 0, mesB = 0] = String(b[0]).split('/').map(Number);
+                return mesA - mesB || diaA - diaB;
+            });
+
+            return {
+                labels: clientesOrdenados.map(item => item[0]),
+                values: clientesOrdenados.map(item => item[1]),
+                total: detalles.reduce((suma, detalle) => suma + Number(detalle.total || 0), 0),
+                run_rate: detalles.reduce((suma, detalle) => suma + Number(detalle.run_rate || 0), 0),
+                fechas: {
+                    labels: fechasOrdenadas.map(item => item[0]),
+                    values: fechasOrdenadas.map(item => item[1].tieneValor ? item[1].total : null)
+                },
+                ticker: tickersOrdenados.slice(0, 40).map(([t, v]) => ({ t, v }))
+            };
+        }
+
         function alternarMenuFA(event) {
             event.stopPropagation();
+            cerrarMenuIFA();
             const menu = document.getElementById('selectorFAMenu');
             const abrir = menu.classList.contains('hidden');
             menu.classList.toggle('hidden', !abrir);
@@ -486,14 +787,19 @@
 
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#selectorFAControl')) cerrarMenuFA();
+            if (!event.target.closest('#selectorIFAControl')) cerrarMenuIFA();
         });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') cerrarMenuFA();
+            if (event.key === 'Escape') {
+                cerrarMenuFA();
+                cerrarMenuIFA();
+            }
         });
 
         function cambiarVistaGlobal() {
             vistaGlobalFA = document.getElementById('selectorFA').value;
+            actualizarSelectorIFA(true);
             if (vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA)) {
                 document.getElementById('boxFA').classList.remove('hidden');
             } else {
@@ -656,6 +962,7 @@
             });
         }
 
+        // SISTEMA DUAL DE TICKER (IFA vs Cliente)
         function abrirModalTicker(tickerName) {
             tickerAbiertoActual = tickerName;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
@@ -697,14 +1004,31 @@
             if (typeof datosDashboard === 'undefined') return;
             
             const data = datosDashboard.vistas[vistaGlobalFA][periodoActual];
+            const ifaFiltrado = ifasSeleccionados.size > 0;
+            const detalleIFA = obtenerDetalleIFA();
+            const etiquetaIFAs = obtenerEtiquetaIFAsSeleccionados();
+            const clientesFuente = ifaFiltrado
+                ? { labels: detalleIFA?.labels || [], values: detalleIFA?.values || [] }
+                : data.cliente;
+            const datosTickerVista = ifaFiltrado ? (detalleIFA?.ticker || []) : data.ticker;
+            const fechasVista = ifaFiltrado
+                ? (detalleIFA?.fechas || { labels: [], values: [] })
+                : data.fechas;
             
             dataIFAOriginal.labels = data.ifa.labels;
             dataIFAOriginal.values = data.ifa.values;
             dataIFAOriginal.tooltips = data.ifa.tooltips;
             
-            const clientesIdentificados = filtrarClientesIdentificados(data.cliente);
+            const clientesIdentificados = filtrarClientesIdentificados(clientesFuente);
             dataClienteOriginal.labels = clientesIdentificados.labels;
             dataClienteOriginal.values = clientesIdentificados.values;
+
+            document.getElementById('lblTopClientes').innerText = ifaFiltrado
+                ? `Top Clientes · ${etiquetaIFAs}`
+                : 'Top Clientes';
+            document.getElementById('lblTicker').innerText = ifaFiltrado
+                ? `Proporción por Ticker · ${etiquetaIFAs}`
+                : 'Proporción por Ticker';
             
             document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
             document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
@@ -720,7 +1044,6 @@
                 document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
                 document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('lblCumplimientoDetalle').innerText = `run rate vs. plan ${data.mes_plan || 'mensual'}`;
-                document.getElementById('lblEvolucionAviso').classList.add('hidden');
             } else {
                 kpiRunRateCard.classList.add('hidden');
                 kpiGrid.classList.add('is-ytd');
@@ -730,7 +1053,6 @@
                 const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
                 document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
-                document.getElementById('lblEvolucionAviso').classList.remove('hidden');
             }
 
             const tituloEquipo = vistaGlobalFA === 'EQUIPO' ? 'Team Sproviero' : `Equipo: ${vistaGlobalFA}`;
@@ -779,26 +1101,14 @@
                 const datosEquipo = datosDashboard.vistas.EQUIPO[periodoActual];
                 const datosFAGrafico = filtrarFAsParaGrafico(datosEquipo.fa);
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
-                    type: 'doughnut', 
-                    plugins: [ChartDataLabels],
-                    data: { labels: datosFAGrafico.labels, datasets: [{ data: datosFAGrafico.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
+                    type: 'doughnut', data: { labels: datosFAGrafico.labels, datasets: [{ data: datosFAGrafico.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { 
+                        layout: { padding: { top: 6, right: 76, bottom: 6, left: 76 } },
+                        plugins: {
                             legend: { position: 'right' },
-                            datalabels: {
-                                display: function(context) {
-                                    let value = context.dataset.data[context.dataIndex];
-                                    let sum = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    return (value / sum) > 0.04; 
-                                },
-                                color: '#ffffff',
-                                font: { weight: 'bold', size: 10 },
-                                formatter: (value) => '$ ' + formatoUSD(value),
-                                anchor: 'center',
-                                align: 'center'
-                            }
+                            etiquetasMontosFA: { display: true }
                         },
                         onClick: (e, els) => {
                             if (els.length === 0) return;
@@ -812,7 +1122,7 @@
 
             graficosActivos.ticker = new Chart(document.getElementById('chartTicker').getContext('2d'), {
                 type: 'treemap',
-                data: { datasets: [{ tree: data.ticker, key: 'v', groups: ['t'], spacing: 2, borderWidth: 2, borderColor: COLORES.panel, backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; return COLORES.palette[ctx.dataIndex % COLORES.palette.length]; }, 
+                data: { datasets: [{ tree: datosTickerVista, key: 'v', groups: ['t'], spacing: 2, borderWidth: 2, borderColor: COLORES.panel, backgroundColor: (ctx) => { if (ctx.type !== 'data') return 'transparent'; return COLORES.palette[ctx.dataIndex % COLORES.palette.length]; }, 
                 labels: { display: true, formatter: (ctx) => {
                     if (ctx.type !== 'data') return [];
                     const sum = ctx.chart.data.datasets[0].tree.reduce((acc, item) => acc + item.v, 0);
@@ -820,52 +1130,61 @@
                     return [ctx.raw.g, "$" + formatoUSD(ctx.raw.v), pct];
                 }, color: '#ffffff', font: { size: 11, weight: 'bold' } } }] },
                 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                title: () => null,
-                                label: (item) => {
-                                    const dataset = item.chart.data.datasets[item.datasetIndex];
-                                    const sum = dataset.tree.reduce((acc, curr) => acc + curr.v, 0);
-                                    const pct = ((item.raw.v / sum) * 100).toFixed(1) + "%";
-                                    return `${item.raw.g}: u$s ${formatoUSD(item.raw.v)} (${pct})`;
-                                }
+                                title: (items) => items[0]?.raw?.g || '',
+                                label: (item) => `Facturación: u$s ${formatoUSD(Number(item.raw?.v || 0))}`
                             }
                         }
-                    }, 
-                    onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); } 
+                    },
+                    onClick: (e, els) => { if(els.length > 0) abrirModalTicker(graficosActivos.ticker.data.datasets[0].tree[els[0].index].t); }
                 }
             });
 
-            const mesActualIndex = (data.mes_actual_num || 1) - 1;
+            const etiquetasEvolucion = [...(fechasVista.labels || [])];
+            const valoresEvolucion = [...(fechasVista.values || [])];
+            let indiceRunRate = -1;
+
+            if (periodoActual === 'ytd') {
+                const partesFecha = String(datosDashboard.ultima_actualizacion || '').split('/');
+                const numeroMes = Number(partesFecha[1]);
+                const abreviaturasMes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+                const mesBuscado = abreviaturasMes[numeroMes - 1];
+                const datosMTD = ifaFiltrado
+                    ? obtenerDetalleIFA('mtd')
+                    : datosDashboard.vistas[vistaGlobalFA]?.mtd;
+
+                indiceRunRate = etiquetasEvolucion.findIndex(etiqueta =>
+                    String(etiqueta || '').trim().toLowerCase().slice(0, 3) === mesBuscado
+                );
+
+                if (indiceRunRate >= 0 && Number.isFinite(Number(datosMTD?.run_rate))) {
+                    valoresEvolucion[indiceRunRate] = Number(datosMTD.run_rate);
+                } else {
+                    indiceRunRate = -1;
+                }
+            }
 
             const datasetsEvolucion = [{
-                label: 'Facturación',
-                data: data.fechas.values,
+                label: periodoActual === 'ytd' ? 'Facturación / Run Rate mes actual' : 'Facturación',
+                data: valoresEvolucion,
+                indiceRunRate,
                 borderColor: COLORES.emerald,
                 backgroundColor: 'rgba(52, 211, 153, 0.10)',
-                pointBackgroundColor: (ctx) => {
-                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return COLORES.amber;
-                    return COLORES.emerald;
-                },
-                pointRadius: (ctx) => {
-                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return 5;
-                    return 3;
-                },
-                pointBorderColor: (ctx) => {
-                    if (periodoActual === 'ytd' && ctx.dataIndex === mesActualIndex) return '#ffffff';
-                    return COLORES.emerald;
-                },
+                pointBackgroundColor: (ctx) => ctx.dataIndex === indiceRunRate ? COLORES.amber : COLORES.emerald,
+                pointRadius: (ctx) => ctx.dataIndex === indiceRunRate ? 5 : 3,
+                pointHoverRadius: (ctx) => ctx.dataIndex === indiceRunRate ? 7 : 5,
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3
             }];
 
-            if (periodoActual === 'ytd' && data.fechas.plan_values?.length) {
+            if (periodoActual === 'ytd' && !ifaFiltrado && data.fechas.plan_values?.length) {
                 datasetsEvolucion.push({
                     label: 'Plan mensual',
                     data: data.fechas.plan_values,
@@ -879,28 +1198,28 @@
                 });
             }
 
-            document.getElementById('lblEvolucion').innerText = periodoActual === 'ytd'
-                ? 'Evolución de Facturación vs. Plan Mensual'
-                : 'Evolución de Facturación';
+            document.getElementById('lblEvolucion').innerText = ifaFiltrado
+                ? `Evolución de Facturación · ${etiquetaIFAs}`
+                : periodoActual === 'ytd'
+                    ? 'Evolución de Facturación vs. Plan Mensual'
+                    : 'Evolución de Facturación';
 
             graficosActivos.evolucion = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
                 type: 'line',
-                data: { labels: data.fechas.labels, datasets: datasetsEvolucion },
+                data: { labels: etiquetasEvolucion, datasets: datasetsEvolucion },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: periodoActual === 'ytd', position: 'top' },
-                        tooltip: { 
-                            callbacks: { 
+                        tooltip: {
+                            callbacks: {
                                 label: (item) => {
-                                    let labelText = item.dataset.label;
-                                    if (periodoActual === 'ytd' && item.dataset.label === 'Facturación' && item.dataIndex === mesActualIndex) {
-                                        labelText = 'Run Rate Proyectado';
-                                    }
-                                    return `${labelText}: u$s ${formatoUSD(item.raw)}`;
+                                    const esRunRate = item.dataset.indiceRunRate === item.dataIndex;
+                                    const nombreSerie = esRunRate ? 'Run Rate' : item.dataset.label;
+                                    return `${nombreSerie}: u$s ${formatoUSD(item.raw)}`;
                                 }
-                            } 
+                            }
                         }
                     }
                 }
