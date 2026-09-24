@@ -292,12 +292,12 @@
                 </article>
                 <article class="kpi-card kpi-purple">
                     <p class="metric-label"><span class="metric-icon">◎</span><span id="lblPlan">Plan Objetivo</span></p>
-                    <h3 class="metric-value">u$s <span id="kpiPlan">0</span></h3>
+                    <h3 class="metric-value"><span id="kpiPlanPrefijo">u$s </span><span id="kpiPlan">0</span></h3>
                     <p id="lblPlanDetalle" class="hidden">Objetivo anual 2026</p>
                 </article>
                 <article class="kpi-card kpi-slate">
                     <p class="metric-label"><span class="metric-icon">％</span>Cumplimiento</p>
-                    <h3 class="metric-value"><span id="kpiCumplimiento">0</span>%</h3>
+                    <h3 class="metric-value"><span id="kpiCumplimiento">0</span><span id="kpiCumplimientoSufijo">%</span></h3>
                     <p id="lblCumplimientoDetalle" class="hidden">vs. plan del período</p>
                 </article>
             </div>
@@ -306,7 +306,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section class="chart-panel flex flex-col">
                 <div class="chart-header">
-                    <h3 class="section-heading heading-blue"><span class="heading-icon">♣</span>Top Productores</h3>
+                    <h3 class="section-heading heading-blue"><span class="heading-icon">♣</span><span id="lblTopProductores">Top Productores</span></h3>
                     <div class="search-wrapper">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
                         <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="search-control">
@@ -327,7 +327,7 @@
             </section>
 
             <section id="boxFA" class="chart-panel">
-                <div class="chart-header"><h3 class="section-heading heading-purple"><span class="heading-icon">◉</span>Facturación por FA</h3></div>
+                <div class="chart-header"><h3 class="section-heading heading-purple"><span class="heading-icon">◉</span><span id="lblFA">Facturación por FA</span></h3></div>
                 <div class="relative h-[300px] flex justify-center"><canvas id="chartFA"></canvas></div>
             </section>
             
@@ -482,7 +482,7 @@
             const historicoSeleccionado = esFAHistorico(vistaGlobalFA) ? vistaGlobalFA : null;
 
             (dataFA?.labels || []).forEach((fa, i) => {
-                if (!esFAHistorico(fa) || fa === historicoSeleccionado) {
+                if (ifasSeleccionados.size > 0 || !esFAHistorico(fa) || fa === historicoSeleccionado) {
                     resultado.labels.push(fa);
                     resultado.values.push(dataFA.values[i]);
                 }
@@ -746,6 +746,56 @@
                     values: fechasOrdenadas.map(item => item[1].tieneValor ? item[1].total : null)
                 },
                 ticker: tickersOrdenados.slice(0, 40).map(([t, v]) => ({ t, v }))
+            };
+        }
+
+        function obtenerFADelIFA(ifa, periodo = periodoActual) {
+            const vista = datosDashboard.vistas[vistaGlobalFA] || {};
+            return vista?.[periodo]?.ifa_detalles?.[ifa]?.fa
+                || vista?.mtd?.ifa_detalles?.[ifa]?.fa
+                || vista?.ytd?.ifa_detalles?.[ifa]?.fa
+                || 'N/A';
+        }
+
+        function obtenerDatosIFAsFiltrados(data) {
+            if (ifasSeleccionados.size === 0) return data.ifa;
+
+            const valores = new Map();
+            (data.ifa?.labels || []).forEach((ifa, i) => {
+                valores.set(ifa, {
+                    valor: Number(data.ifa.values?.[i] || 0),
+                    fa: data.ifa.tooltips?.[i] || obtenerFADelIFA(ifa)
+                });
+            });
+
+            const seleccionados = obtenerIFAsSeleccionados().map(ifa => ({
+                ifa,
+                valor: valores.get(ifa)?.valor || 0,
+                fa: valores.get(ifa)?.fa || obtenerFADelIFA(ifa)
+            })).sort((a, b) => b.valor - a.valor);
+
+            return {
+                labels: seleccionados.map(item => item.ifa),
+                values: seleccionados.map(item => item.valor),
+                tooltips: seleccionados.map(item => item.fa)
+            };
+        }
+
+        function obtenerDatosFAPorIFAs(periodo = periodoActual) {
+            const detalles = datosDashboard.vistas[vistaGlobalFA]?.[periodo]?.ifa_detalles || {};
+            const porFA = new Map();
+
+            obtenerIFAsSeleccionados().forEach(ifa => {
+                const detalle = detalles[ifa];
+                const fa = detalle?.fa || obtenerFADelIFA(ifa, periodo);
+                const total = Number(detalle?.total || 0);
+                porFA.set(fa, (porFA.get(fa) || 0) + total);
+            });
+
+            const ordenados = Array.from(porFA.entries()).sort((a, b) => b[1] - a[1]);
+            return {
+                labels: ordenados.map(item => item[0]),
+                values: ordenados.map(item => item[1])
             };
         }
 
@@ -1015,10 +1065,13 @@
             const fechasVista = ifaFiltrado
                 ? (detalleIFA?.fechas || { labels: [], values: [] })
                 : data.fechas;
+            const datosIFAVista = obtenerDatosIFAsFiltrados(data);
+            const totalVista = ifaFiltrado ? Number(detalleIFA?.total || 0) : Number(data.total || 0);
+            const runRateVista = ifaFiltrado ? Number(detalleIFA?.run_rate || 0) : Number(data.run_rate || 0);
             
-            dataIFAOriginal.labels = data.ifa.labels;
-            dataIFAOriginal.values = data.ifa.values;
-            dataIFAOriginal.tooltips = data.ifa.tooltips;
+            dataIFAOriginal.labels = datosIFAVista.labels;
+            dataIFAOriginal.values = datosIFAVista.values;
+            dataIFAOriginal.tooltips = datosIFAVista.tooltips;
             
             const clientesIdentificados = filtrarClientesIdentificados(clientesFuente);
             dataClienteOriginal.labels = clientesIdentificados.labels;
@@ -1030,30 +1083,54 @@
             document.getElementById('lblTicker').innerText = ifaFiltrado
                 ? `Proporción por Ticker · ${etiquetaIFAs}`
                 : 'Proporción por Ticker';
+            document.getElementById('lblTopProductores').innerText = ifaFiltrado
+                ? `Top Productores · ${etiquetaIFAs}`
+                : 'Top Productores';
+            document.getElementById('lblFA').innerText = ifaFiltrado
+                ? `Facturación por FA · ${etiquetaIFAs}`
+                : 'Facturación por FA';
             
-            document.getElementById('kpiTotal').innerText = formatoUSD(data.total);
-            document.getElementById('kpiRunRate').innerText = formatoUSD(data.run_rate);
+            document.getElementById('kpiTotal').innerText = formatoUSD(totalVista);
+            document.getElementById('kpiRunRate').innerText = formatoUSD(runRateVista);
 
             const kpiGrid = document.getElementById('kpiGrid');
             const kpiRunRateCard = document.getElementById('kpiRunRateCard');
+            const kpiPlanPrefijo = document.getElementById('kpiPlanPrefijo');
+            const kpiCumplimientoSufijo = document.getElementById('kpiCumplimientoSufijo');
+            kpiPlanPrefijo.classList.toggle('hidden', ifaFiltrado);
+            kpiCumplimientoSufijo.classList.toggle('hidden', ifaFiltrado);
             
             if (periodoActual === 'mtd') {
                 kpiRunRateCard.classList.remove('hidden');
                 kpiGrid.classList.remove('is-ytd');
                 document.getElementById('lblPlan').innerText = 'Plan Mensual';
-                document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
-                document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
-                document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                document.getElementById('lblCumplimientoDetalle').innerText = `run rate vs. plan ${data.mes_plan || 'mensual'}`;
+                if (ifaFiltrado) {
+                    document.getElementById('kpiPlan').innerText = '—';
+                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan individual por IFA';
+                    document.getElementById('kpiCumplimiento').innerText = '—';
+                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible para el filtro de IFA';
+                } else {
+                    document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
+                    document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
+                    document.getElementById('kpiCumplimiento').innerText = data.cumplimiento_mtd.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                    document.getElementById('lblCumplimientoDetalle').innerText = `run rate vs. plan ${data.mes_plan || 'mensual'}`;
+                }
             } else {
                 kpiRunRateCard.classList.add('hidden');
                 kpiGrid.classList.add('is-ytd');
                 document.getElementById('lblPlan').innerText = "Plan Anual";
-                document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
-                document.getElementById('lblPlanDetalle').innerText = "Objetivo anual 2026";
-                const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
-                document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
+                if (ifaFiltrado) {
+                    document.getElementById('kpiPlan').innerText = '—';
+                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan individual por IFA';
+                    document.getElementById('kpiCumplimiento').innerText = '—';
+                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible para el filtro de IFA';
+                } else {
+                    document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
+                    document.getElementById('lblPlanDetalle').innerText = "Objetivo anual 2026";
+                    const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
+                    document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                    document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
+                }
             }
 
             const tituloEquipo = vistaGlobalFA === 'EQUIPO' ? 'Team Sproviero' : `Equipo: ${vistaGlobalFA}`;
@@ -1064,12 +1141,12 @@
             graficosActivos.ifa = new Chart(document.getElementById('chartIFA').getContext('2d'), {
                 type: 'bar', 
                 data: { 
-                    labels: data.ifa.labels.slice(0, 15), 
+                    labels: dataIFAOriginal.labels.slice(0, 15), 
                     datasets: [{ 
-                        data: data.ifa.values.slice(0, 15), 
+                        data: dataIFAOriginal.values.slice(0, 15), 
                         backgroundColor: COLORES.blue, 
                         borderRadius: 5, 
-                        customTooltips: data.ifa.tooltips.slice(0, 15) 
+                        customTooltips: dataIFAOriginal.tooltips.slice(0, 15) 
                     }] 
                 },
                 options: { 
@@ -1098,9 +1175,13 @@
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(graficosActivos.cliente.data.labels[els[0].index]); } }
             });
 
-            if (vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA)) {
-                const datosEquipo = datosDashboard.vistas.EQUIPO[periodoActual];
-                const datosFAGrafico = filtrarFAsParaGrafico(datosEquipo.fa);
+            const mostrarGraficoFA = ifaFiltrado || vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA);
+            document.getElementById('boxFA').classList.toggle('hidden', !mostrarGraficoFA);
+
+            if (mostrarGraficoFA) {
+                const datosFAGrafico = ifaFiltrado
+                    ? filtrarFAsParaGrafico(obtenerDatosFAPorIFAs(periodoActual))
+                    : filtrarFAsParaGrafico(datosDashboard.vistas.EQUIPO[periodoActual].fa);
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
                     type: 'doughnut', data: { labels: datosFAGrafico.labels, datasets: [{ data: datosFAGrafico.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
                     options: {
@@ -1112,7 +1193,7 @@
                             etiquetasMontosFA: { display: true }
                         },
                         onClick: (e, els) => {
-                            if (els.length === 0) return;
+                            if (ifaFiltrado || els.length === 0) return;
                             const faElegido = graficosActivos.fa.data.labels[els[0].index];
                             if (esFAHistorico(vistaGlobalFA)) seleccionarFA(faElegido);
                             else abrirModalFA(faElegido);
