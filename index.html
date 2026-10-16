@@ -40,6 +40,7 @@
         .field-label { font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
         .select-control, .search-control { color: #e2e8f0; background: #020617; border: 1px solid #334155; border-radius: 10px; outline: none; transition: border-color .18s, box-shadow .18s; }
         .select-control { min-width: 210px; padding: 9px 12px; font-size: 13px; font-weight: 650; }
+        .team-select { width: 150px; min-width: 150px; }
         .search-control { width: 100%; padding: 8px 11px; font-size: 12px; }
         .select-control:focus, .search-control:focus { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
         .search-control::placeholder { color: #64748b; }
@@ -55,10 +56,11 @@
         .fa-option, .ifa-option, .fa-history-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; cursor: pointer; text-align: left; }
         .fa-option, .ifa-option { min-height: 34px; padding: 8px 9px; color: #cbd5e1; background: transparent; border-radius: 7px; font-size: 13px; }
         .ifa-option { justify-content: flex-start; }
+        .fa-option.multi-option { justify-content: flex-start; }
         .fa-option:hover, .ifa-option:hover { color: #f8fafc; background: #172033; }
         .fa-option.active, .ifa-option.active { color: #34d399; background: rgba(16,185,129,.10); font-weight: 750; }
         .ifa-option-marker { width: 17px; height: 17px; display: grid; place-items: center; flex: 0 0 auto; color: transparent; border: 1px solid #475569; border-radius: 5px; font-size: 11px; font-weight: 900; }
-        .ifa-option.active .ifa-option-marker { color: #052e2b; background: #34d399; border-color: #34d399; }
+        .ifa-option.active .ifa-option-marker, .fa-option.active .ifa-option-marker { color: #052e2b; background: #34d399; border-color: #34d399; }
         .ifa-option-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .selector-menu-search { position: sticky; top: -6px; z-index: 2; margin: -6px -6px 5px; padding: 7px; background: #0b1220; border-bottom: 1px solid #1e293b; }
         .selector-menu-search .search-control { padding-block: 7px; }
@@ -69,7 +71,7 @@
         .fa-history-toggle svg { width: 14px; height: 14px; transition: transform .18s; }
         .fa-history-toggle.expanded svg { transform: rotate(180deg); }
         .fa-history-badge { margin-left: auto; padding: 2px 6px; color: #94a3b8; background: #1e293b; border-radius: 999px; font-size: 9px; letter-spacing: 0; }
-        .fa-historical-label { padding: 2px 5px; color: #fbbf24; background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.24); border-radius: 5px; font-size: 8px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
+        .fa-historical-label { margin-left: auto; padding: 2px 5px; color: #fbbf24; background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.24); border-radius: 5px; font-size: 8px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
         .segmented-control { display: flex; gap: 4px; padding: 4px; background: #020617; border: 1px solid #1e293b; border-radius: 11px; }
         .period-button, .mini-segment { border: 0; border-radius: 8px; color: #94a3b8; background: transparent; font-weight: 700; transition: color .18s, background .18s, box-shadow .18s; cursor: pointer; }
         .period-button { padding: 8px 15px; font-size: 12px; }
@@ -200,16 +202,21 @@
                 </div>
             </div>
 
-            <!-- MODAL TICKER DUAL -->
+            <!-- MODAL TICKER: productores, clientes y compra/venta -->
             <div id="modalTicker" class="hidden">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
                     <h3 id="lblModalTickerSub" class="section-heading">Productores</h3>
                     <div class="segmented-control">
                         <button id="btnTkIFA" onclick="renderizarGraficoTickerDual('ifa')" class="mini-segment active">Productores</button>
                         <button id="btnTkCli" onclick="renderizarGraficoTickerDual('cliente')" class="mini-segment">Clientes</button>
+                        <button id="btnTkCompraVenta" onclick="renderizarGraficoTickerDual('compra_venta')" class="mini-segment">Compra vs. Venta</button>
                     </div>
                 </div>
-                <div class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
+                <p id="resumenCompraVenta" class="hidden mb-3 text-xs text-slate-400"></p>
+                <div id="sinDatosCompraVenta" class="hidden h-[400px] items-center justify-center text-center text-sm text-slate-500">
+                    No hay operaciones identificadas como compra o venta para este activo en el filtro actual.
+                </div>
+                <div id="contenedorChartModalTicker" class="relative h-[400px]"><canvas id="chartModalTicker"></canvas></div>
             </div>
         </div>
     </div>
@@ -235,14 +242,22 @@
 
                 <div class="top-controls">
                     <div class="field-block">
-                        <span id="lblSelectorFA" class="field-label">Filtro de equipo (FA)</span>
+                        <label for="selectorEquipo" class="field-label">Filtro de equipo</label>
+                        <select id="selectorEquipo" class="select-control team-select" onchange="cambiarEquipo(this.value)">
+                            <option value="TODOS">TODOS (SS + VL)</option>
+                            <option value="SS">SS</option>
+                            <option value="VL">VL</option>
+                        </select>
+                    </div>
+                    <div class="field-block">
+                        <span id="lblSelectorFA" class="field-label">Filtro de FA</span>
                         <div id="selectorFAControl" class="fa-select">
-                            <input id="selectorFA" type="hidden" value="EQUIPO">
+                            <input id="selectorFA" type="hidden" value="__TODOS__">
                             <button id="selectorFATrigger" type="button" class="fa-select-trigger" aria-labelledby="lblSelectorFA selectorFAValor" aria-haspopup="listbox" aria-expanded="false" onclick="alternarMenuFA(event)">
-                                <span id="selectorFAValor">EQUIPO</span>
+                                <span id="selectorFAValor">TODOS LOS FAs</span>
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
                             </button>
-                            <div id="selectorFAMenu" class="fa-menu hidden" role="listbox" aria-labelledby="lblSelectorFA">
+                            <div id="selectorFAMenu" class="fa-menu hidden" role="listbox" aria-multiselectable="true" aria-labelledby="lblSelectorFA">
                                 <div id="selectorFAActivos"></div>
                                 <div id="selectorFAHistoricosWrapper" class="fa-history-section hidden">
                                     <button id="btnFAHistoricos" type="button" class="fa-history-toggle" onclick="alternarHistoricosFA(event)">
@@ -352,6 +367,7 @@
             cyan: '#22d3ee',
             indigo: '#818cf8',
             amber: '#fbbf24',
+            rose: '#fb7185',
             slate: '#64748b',
             panel: '#0f172a',
             grid: 'rgba(51, 65, 85, 0.38)',
@@ -448,17 +464,25 @@
         let modalCharts = {};
         
         let periodoActual = 'mtd';
-        let vistaGlobalFA = 'EQUIPO'; 
+        let equipoActual = 'TODOS';
+        const FA_TODOS = '__TODOS__';
         const IFA_TODOS = '__TODOS__';
+        let fasSeleccionados = new Set();
+        let listaFAsSelector = [];
         let ifasSeleccionados = new Set();
         let listaIFAsSelector = [];
         let clienteAbiertoActual = ''; 
         let tickerAbiertoActual = '';
+        const cacheVistas = new Map();
         
         let dataIFAOriginal = { labels: [], values: [], tooltips: [] };
         let dataClienteOriginal = { labels: [], values: [] };
         let dataModalIFAOriginal = { labels: [], values: [] };
         const FAS_HISTORICOS = new Set(['diaz reynolds']);
+        const EQUIPOS_FA_FALLBACK = Object.freeze({
+            SS: ['Sproviero', 'Solari', 'Dhers', 'Lascano', 'Saner'],
+            VL: ['Lanzilotti', 'Moyano']
+        });
         let historicosFAVisibles = false;
 
         function filtrarClientesIdentificados(data) {
@@ -479,10 +503,10 @@
 
         function filtrarFAsParaGrafico(dataFA) {
             const resultado = { labels: [], values: [] };
-            const historicoSeleccionado = esFAHistorico(vistaGlobalFA) ? vistaGlobalFA : null;
+            const fasEfectivos = new Set(obtenerFAsEfectivos());
 
             (dataFA?.labels || []).forEach((fa, i) => {
-                if (ifasSeleccionados.size > 0 || !esFAHistorico(fa) || fa === historicoSeleccionado) {
+                if (fasEfectivos.has(fa)) {
                     resultado.labels.push(fa);
                     resultado.values.push(dataFA.values[i]);
                 }
@@ -490,16 +514,48 @@
             return resultado;
         }
 
-        function crearOpcionFA(fa, historico = false) {
+        function obtenerMapaEquipos() {
+            return datosDashboard.equipos_fa || EQUIPOS_FA_FALLBACK;
+        }
+
+        function obtenerFAsActivosEquipo() {
+            const disponibles = new Set(datosDashboard.lista_fas || []);
+            const mapaEquipos = obtenerMapaEquipos();
+            const fasEquipo = equipoActual === 'TODOS'
+                ? Object.values(mapaEquipos).flat()
+                : (mapaEquipos[equipoActual] || []);
+            return Array.from(new Set(fasEquipo)).filter(fa => disponibles.has(fa));
+        }
+
+        function obtenerFAsEfectivos() {
+            return fasSeleccionados.size > 0
+                ? Array.from(fasSeleccionados)
+                : obtenerFAsActivosEquipo();
+        }
+
+        function obtenerEtiquetaFAsSeleccionados() {
+            const seleccionados = Array.from(fasSeleccionados);
+            if (seleccionados.length === 0) return 'TODOS LOS FAs';
+            if (seleccionados.length === 1) return seleccionados[0];
+            return `${seleccionados.length} FAs seleccionados`;
+        }
+
+        function crearOpcionFA(fa, etiqueta = fa, historico = false) {
             const opcion = document.createElement('button');
             opcion.type = 'button';
-            opcion.className = 'fa-option';
+            opcion.className = 'fa-option multi-option';
             opcion.dataset.value = fa;
             opcion.setAttribute('role', 'option');
 
+            const marcador = document.createElement('span');
+            marcador.className = 'ifa-option-marker';
+            marcador.innerText = '✓';
+            marcador.setAttribute('aria-hidden', 'true');
+
             const nombre = document.createElement('span');
-            nombre.innerText = fa;
-            opcion.appendChild(nombre);
+            nombre.className = 'ifa-option-label';
+            nombre.innerText = etiqueta;
+            opcion.append(marcador, nombre);
 
             if (historico) {
                 const etiqueta = document.createElement('span');
@@ -519,20 +575,35 @@
             const contenedorActivos = document.getElementById('selectorFAActivos');
             const contenedorHistoricos = document.getElementById('selectorFAHistoricos');
             const wrapperHistoricos = document.getElementById('selectorFAHistoricosWrapper');
-            const fasHistoricos = datosDashboard.lista_fas.filter(esFAHistorico);
-            const fasActivos = datosDashboard.lista_fas.filter(fa => !esFAHistorico(fa));
+            const fasHistoricos = (equipoActual === 'SS' || equipoActual === 'TODOS')
+                ? (datosDashboard.lista_fas || []).filter(esFAHistorico)
+                : [];
+            listaFAsSelector = obtenerFAsActivosEquipo();
 
-            contenedorActivos.replaceChildren(crearOpcionFA('EQUIPO'), ...fasActivos.map(fa => crearOpcionFA(fa)));
-            contenedorHistoricos.replaceChildren(...fasHistoricos.map(fa => crearOpcionFA(fa, true)));
+            contenedorActivos.replaceChildren(
+                crearOpcionFA(FA_TODOS, 'TODOS LOS FAs'),
+                ...listaFAsSelector.map(fa => crearOpcionFA(fa))
+            );
+            contenedorHistoricos.replaceChildren(...fasHistoricos.map(fa => crearOpcionFA(fa, fa, true)));
             wrapperHistoricos.classList.toggle('hidden', fasHistoricos.length === 0);
             document.getElementById('cantidadFAHistoricos').innerText = fasHistoricos.length;
+            actualizarTextoSelectorFA();
             actualizarEstadoSelectorFA();
         }
 
+        function actualizarTextoSelectorFA() {
+            document.getElementById('selectorFA').value = fasSeleccionados.size
+                ? Array.from(fasSeleccionados).join('|')
+                : FA_TODOS;
+            document.getElementById('selectorFAValor').innerText = obtenerEtiquetaFAsSeleccionados();
+        }
+
         function actualizarEstadoSelectorFA() {
-            const seleccionado = document.getElementById('selectorFA').value;
             document.querySelectorAll('.fa-option').forEach(opcion => {
-                const activa = opcion.dataset.value === seleccionado;
+                const valor = opcion.dataset.value;
+                const activa = valor === FA_TODOS
+                    ? fasSeleccionados.size === 0
+                    : fasSeleccionados.has(valor);
                 opcion.classList.toggle('active', activa);
                 opcion.setAttribute('aria-selected', activa ? 'true' : 'false');
             });
@@ -549,12 +620,235 @@
                 .toLowerCase();
         }
 
+        function agregarSerieAMapa(mapa, labels = [], values = []) {
+            labels.forEach((label, i) => {
+                const clave = String(label);
+                mapa.set(clave, (mapa.get(clave) || 0) + Number(values[i] || 0));
+            });
+        }
+
+        function mapaAserieOrdenada(mapa, limite = null) {
+            const items = Array.from(mapa.entries()).sort((a, b) => b[1] - a[1]);
+            const recortados = limite ? items.slice(0, limite) : items;
+            return {
+                labels: recortados.map(item => item[0]),
+                values: recortados.map(item => item[1])
+            };
+        }
+
+        function ordenarEtiquetasFecha(a, b) {
+            const meses = new Map(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((mes, i) => [normalizarBusqueda(mes), i]));
+            const indiceA = meses.get(normalizarBusqueda(a));
+            const indiceB = meses.get(normalizarBusqueda(b));
+            if (indiceA !== undefined || indiceB !== undefined) return (indiceA ?? 99) - (indiceB ?? 99);
+            const [diaA = 0, mesA = 0] = String(a).split('/').map(Number);
+            const [diaB = 0, mesB = 0] = String(b).split('/').map(Number);
+            return mesA - mesB || diaA - diaB;
+        }
+
+        function combinarSeriesFechas(series = []) {
+            const mapa = new Map();
+            series.forEach(serie => {
+                (serie?.labels || []).forEach((label, i) => {
+                    const acumulado = mapa.get(label) || { total: 0, tieneValor: false };
+                    const valor = serie?.values?.[i];
+                    if (valor !== null && valor !== undefined && Number.isFinite(Number(valor))) {
+                        acumulado.total += Number(valor);
+                        acumulado.tieneValor = true;
+                    }
+                    mapa.set(label, acumulado);
+                });
+            });
+            const ordenados = Array.from(mapa.entries()).sort((a, b) => ordenarEtiquetasFecha(a[0], b[0]));
+            return {
+                labels: ordenados.map(item => item[0]),
+                values: ordenados.map(item => item[1].tieneValor ? item[1].total : null)
+            };
+        }
+
+        function combinarDetalleIFA(a, b) {
+            const clientes = new Map();
+            agregarSerieAMapa(clientes, a?.labels, a?.values);
+            agregarSerieAMapa(clientes, b?.labels, b?.values);
+            const tickers = new Map();
+            (a?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
+            (b?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
+            const serieClientes = mapaAserieOrdenada(clientes);
+            const fas = new Set([a?.fa, b?.fa].filter(Boolean).flatMap(fa => String(fa).split(' / ')));
+            return {
+                fa: Array.from(fas).join(' / ') || 'N/A',
+                labels: serieClientes.labels,
+                values: serieClientes.values,
+                total: Number(a?.total || 0) + Number(b?.total || 0),
+                run_rate: Number(a?.run_rate || 0) + Number(b?.run_rate || 0),
+                fechas: combinarSeriesFechas([a?.fechas, b?.fechas]),
+                ticker: Array.from(tickers.entries()).sort((x, y) => y[1] - x[1]).slice(0, 40).map(([t, v]) => ({ t, v }))
+            };
+        }
+
+        function combinarDetalleCliente(a, b) {
+            const tickers = new Map();
+            (a?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
+            (b?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
+            return {
+                fechas: combinarSeriesFechas([a?.fechas, b?.fechas]),
+                ticker: Array.from(tickers.entries()).sort((x, y) => y[1] - x[1]).slice(0, 10).map(([t, v]) => ({ t, v })),
+                total: Number(a?.total || 0) + Number(b?.total || 0)
+            };
+        }
+
+        function combinarDetalleTicker(a, b) {
+            const ifas = new Map();
+            const clientes = new Map();
+            agregarSerieAMapa(ifas, a?.ifa?.labels, a?.ifa?.values);
+            agregarSerieAMapa(ifas, b?.ifa?.labels, b?.ifa?.values);
+            agregarSerieAMapa(clientes, a?.cliente?.labels, a?.cliente?.values);
+            agregarSerieAMapa(clientes, b?.cliente?.labels, b?.cliente?.values);
+
+            const compraVenta = new Map();
+            [a?.compra_venta, b?.compra_venta].forEach(detalle => {
+                (detalle?.labels || []).forEach((ifa, i) => {
+                    const actual = compraVenta.get(ifa) || { compra: 0, venta: 0 };
+                    actual.compra += Number(detalle.compras?.[i] || 0);
+                    actual.venta += Number(detalle.ventas?.[i] || 0);
+                    compraVenta.set(ifa, actual);
+                });
+            });
+            const cvOrdenado = Array.from(compraVenta.entries())
+                .sort((x, y) => (y[1].compra + y[1].venta) - (x[1].compra + x[1].venta));
+            const serieIFA = mapaAserieOrdenada(ifas, 20);
+            const serieClientes = mapaAserieOrdenada(clientes, 20);
+            const totalCompra = Number(a?.compra_venta?.total_compra || 0) + Number(b?.compra_venta?.total_compra || 0);
+            const totalVenta = Number(a?.compra_venta?.total_venta || 0) + Number(b?.compra_venta?.total_venta || 0);
+            return {
+                ifa: serieIFA,
+                cliente: serieClientes,
+                compra_venta: {
+                    labels: cvOrdenado.map(item => item[0]),
+                    compras: cvOrdenado.map(item => item[1].compra),
+                    ventas: cvOrdenado.map(item => item[1].venta),
+                    total_compra: totalCompra,
+                    total_venta: totalVenta,
+                    diferencia: totalCompra - totalVenta
+                }
+            };
+        }
+
+        function crearVistaVacia() {
+            return {
+                total: 0, run_rate: 0, plan_anual: 0, plan_mensual: 0, plan_ytd: 0,
+                mes_plan: '', cumplimiento_ytd: 0, cumplimiento_mtd: 0,
+                fa: { labels: [], values: [] }, ifa: { labels: [], values: [], tooltips: [] },
+                cliente: { labels: [], values: [] }, fechas: { labels: [], values: [], plan_values: [] },
+                ticker: [], fa_detalles: {}, ifa_detalles: {}, cliente_detalles: {}, ticker_detalles: {}
+            };
+        }
+
+        function obtenerVistaActual(periodo = periodoActual) {
+            const fas = obtenerFAsEfectivos().filter(fa => datosDashboard.vistas?.[fa]?.[periodo]);
+            const clave = `${periodo}|${fas.slice().sort().join('|')}`;
+            if (cacheVistas.has(clave)) return cacheVistas.get(clave);
+            if (fas.length === 0) return crearVistaVacia();
+            if (fas.length === 1) {
+                const vistaUnica = datosDashboard.vistas[fas[0]][periodo];
+                cacheVistas.set(clave, vistaUnica);
+                return vistaUnica;
+            }
+
+            const vistas = fas.map(fa => datosDashboard.vistas[fa][periodo]);
+            const ifas = new Map();
+            const ifasFA = new Map();
+            const clientes = new Map();
+            const tickers = new Map();
+            const fa = new Map();
+            const faDetalles = {};
+            const ifaDetalles = {};
+            const clienteDetalles = {};
+            const tickerDetalles = {};
+
+            vistas.forEach(vista => {
+                agregarSerieAMapa(fa, vista.fa?.labels, vista.fa?.values);
+                agregarSerieAMapa(ifas, vista.ifa?.labels, vista.ifa?.values);
+                (vista.ifa?.labels || []).forEach((ifa, i) => {
+                    const lista = ifasFA.get(ifa) || new Set();
+                    const faNombre = vista.ifa?.tooltips?.[i];
+                    if (faNombre) lista.add(faNombre);
+                    ifasFA.set(ifa, lista);
+                });
+                agregarSerieAMapa(clientes, vista.cliente?.labels, vista.cliente?.values);
+                (vista.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
+
+                Object.entries(vista.fa_detalles || {}).forEach(([claveDetalle, detalle]) => {
+                    if (!faDetalles[claveDetalle]) faDetalles[claveDetalle] = detalle;
+                    else {
+                        const mapa = new Map();
+                        agregarSerieAMapa(mapa, faDetalles[claveDetalle].labels, faDetalles[claveDetalle].values);
+                        agregarSerieAMapa(mapa, detalle.labels, detalle.values);
+                        faDetalles[claveDetalle] = mapaAserieOrdenada(mapa, 15);
+                    }
+                });
+                Object.entries(vista.ifa_detalles || {}).forEach(([claveDetalle, detalle]) => {
+                    ifaDetalles[claveDetalle] = ifaDetalles[claveDetalle]
+                        ? combinarDetalleIFA(ifaDetalles[claveDetalle], detalle)
+                        : detalle;
+                });
+                Object.entries(vista.cliente_detalles || {}).forEach(([claveDetalle, detalle]) => {
+                    clienteDetalles[claveDetalle] = clienteDetalles[claveDetalle]
+                        ? combinarDetalleCliente(clienteDetalles[claveDetalle], detalle)
+                        : detalle;
+                });
+                Object.entries(vista.ticker_detalles || {}).forEach(([claveDetalle, detalle]) => {
+                    tickerDetalles[claveDetalle] = tickerDetalles[claveDetalle]
+                        ? combinarDetalleTicker(tickerDetalles[claveDetalle], detalle)
+                        : detalle;
+                });
+            });
+
+            const serieIFA = mapaAserieOrdenada(ifas);
+            const serieCliente = mapaAserieOrdenada(clientes);
+            const serieFA = mapaAserieOrdenada(fa);
+            const fechas = combinarSeriesFechas(vistas.map(vista => vista.fechas));
+            const planPorFecha = combinarSeriesFechas(vistas.map(vista => ({
+                labels: vista.fechas?.labels || [],
+                values: vista.fechas?.plan_values || []
+            })));
+            const total = vistas.reduce((suma, vista) => suma + Number(vista.total || 0), 0);
+            const runRate = vistas.reduce((suma, vista) => suma + Number(vista.run_rate || 0), 0);
+            const planAnual = vistas.reduce((suma, vista) => suma + Number(vista.plan_anual || 0), 0);
+            const planMensual = vistas.reduce((suma, vista) => suma + Number(vista.plan_mensual || 0), 0);
+            const planYTD = vistas.reduce((suma, vista) => suma + Number(vista.plan_ytd || 0), 0);
+            const vistaCombinada = {
+                total,
+                run_rate: runRate,
+                plan_anual: planAnual,
+                plan_mensual: planMensual,
+                plan_ytd: planYTD,
+                mes_plan: vistas.find(vista => vista.mes_plan)?.mes_plan || '',
+                cumplimiento_ytd: planAnual > 0 ? (total / planAnual) * 100 : 0,
+                cumplimiento_mtd: planMensual > 0 ? (runRate / planMensual) * 100 : 0,
+                fa: serieFA,
+                ifa: {
+                    labels: serieIFA.labels,
+                    values: serieIFA.values,
+                    tooltips: serieIFA.labels.map(ifa => Array.from(ifasFA.get(ifa) || []).join(' / ') || 'N/A')
+                },
+                cliente: serieCliente,
+                fechas: { labels: fechas.labels, values: fechas.values, plan_values: planPorFecha.values },
+                ticker: Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([t, v]) => ({ t, v })),
+                fa_detalles: faDetalles,
+                ifa_detalles: ifaDetalles,
+                cliente_detalles: clienteDetalles,
+                ticker_detalles: tickerDetalles
+            };
+            cacheVistas.set(clave, vistaCombinada);
+            return vistaCombinada;
+        }
+
         function obtenerIFAsDisponibles() {
-            const vista = datosDashboard.vistas[vistaGlobalFA];
             const nombres = new Set();
 
             ['mtd', 'ytd'].forEach(periodo => {
-                (vista?.[periodo]?.ifa?.labels || []).forEach(ifa => nombres.add(String(ifa)));
+                (obtenerVistaActual(periodo)?.ifa?.labels || []).forEach(ifa => nombres.add(String(ifa)));
             });
 
             return Array.from(nombres).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
@@ -621,16 +915,26 @@
             return Array.from(ifasSeleccionados);
         }
 
+        function hayFiltroIFAActivo() {
+            return ifasSeleccionados.size > 0 && ifasSeleccionados.size < listaIFAsSelector.length;
+        }
+
         function obtenerEtiquetaIFAsSeleccionados() {
             const seleccionados = obtenerIFAsSeleccionados();
-            if (seleccionados.length === 0) return 'TODOS LOS IFAs';
+            if (!hayFiltroIFAActivo()) return 'TODOS LOS IFAs';
             if (seleccionados.length === 1) return seleccionados[0];
+            const cantidadExcluidos = listaIFAsSelector.length - seleccionados.length;
+            if (seleccionados.length > listaIFAsSelector.length / 2) {
+                return cantidadExcluidos === 1
+                    ? '1 IFA excluido'
+                    : `${cantidadExcluidos} IFAs excluidos`;
+            }
             return `${seleccionados.length} IFAs seleccionados`;
         }
 
         function actualizarTextoSelectorIFA() {
             const etiqueta = obtenerEtiquetaIFAsSeleccionados();
-            document.getElementById('selectorIFA').value = ifasSeleccionados.size
+            document.getElementById('selectorIFA').value = hayFiltroIFAActivo()
                 ? obtenerIFAsSeleccionados().join('|')
                 : IFA_TODOS;
             document.getElementById('selectorIFAValor').innerText = etiqueta;
@@ -640,7 +944,7 @@
             document.querySelectorAll('.ifa-option').forEach(opcion => {
                 const valor = opcion.dataset.value;
                 const activa = valor === IFA_TODOS
-                    ? ifasSeleccionados.size === 0
+                    ? !hayFiltroIFAActivo()
                     : ifasSeleccionados.has(valor);
                 opcion.classList.toggle('active', activa);
                 opcion.setAttribute('aria-selected', activa ? 'true' : 'false');
@@ -673,7 +977,7 @@
 
         function seleccionarIFA(ifa) {
             if (ifa === IFA_TODOS) {
-                ifasSeleccionados.clear();
+                ifasSeleccionados = new Set(listaIFAsSelector);
             } else if (ifasSeleccionados.has(ifa)) {
                 ifasSeleccionados.delete(ifa);
             } else {
@@ -687,10 +991,10 @@
         }
 
         function obtenerDetalleIFA(periodo = periodoActual) {
+            if (!hayFiltroIFAActivo()) return null;
             const seleccionados = obtenerIFAsSeleccionados();
-            if (seleccionados.length === 0) return null;
 
-            const detallesDisponibles = datosDashboard.vistas[vistaGlobalFA]?.[periodo]?.ifa_detalles || {};
+            const detallesDisponibles = obtenerVistaActual(periodo)?.ifa_detalles || {};
             const detalles = seleccionados
                 .map(ifa => detallesDisponibles[ifa])
                 .filter(Boolean);
@@ -750,15 +1054,14 @@
         }
 
         function obtenerFADelIFA(ifa, periodo = periodoActual) {
-            const vista = datosDashboard.vistas[vistaGlobalFA] || {};
-            return vista?.[periodo]?.ifa_detalles?.[ifa]?.fa
-                || vista?.mtd?.ifa_detalles?.[ifa]?.fa
-                || vista?.ytd?.ifa_detalles?.[ifa]?.fa
+            return obtenerVistaActual(periodo)?.ifa_detalles?.[ifa]?.fa
+                || obtenerVistaActual('mtd')?.ifa_detalles?.[ifa]?.fa
+                || obtenerVistaActual('ytd')?.ifa_detalles?.[ifa]?.fa
                 || 'N/A';
         }
 
         function obtenerDatosIFAsFiltrados(data) {
-            if (ifasSeleccionados.size === 0) return data.ifa;
+            if (!hayFiltroIFAActivo()) return data.ifa;
 
             const valores = new Map();
             (data.ifa?.labels || []).forEach((ifa, i) => {
@@ -782,14 +1085,14 @@
         }
 
         function obtenerDatosFAPorIFAs(periodo = periodoActual) {
-            const detalles = datosDashboard.vistas[vistaGlobalFA]?.[periodo]?.ifa_detalles || {};
             const porFA = new Map();
 
-            obtenerIFAsSeleccionados().forEach(ifa => {
-                const detalle = detalles[ifa];
-                const fa = detalle?.fa || obtenerFADelIFA(ifa, periodo);
-                const total = Number(detalle?.total || 0);
-                porFA.set(fa, (porFA.get(fa) || 0) + total);
+            obtenerFAsEfectivos().forEach(fa => {
+                const detallesFA = datosDashboard.vistas?.[fa]?.[periodo]?.ifa_detalles || {};
+                obtenerIFAsSeleccionados().forEach(ifa => {
+                    const total = Number(detallesFA[ifa]?.total || 0);
+                    if (total !== 0) porFA.set(fa, (porFA.get(fa) || 0) + total);
+                });
             });
 
             const ordenados = Array.from(porFA.entries()).sort((a, b) => b[1] - a[1]);
@@ -820,19 +1123,43 @@
         }
 
         function seleccionarFA(fa) {
-            document.getElementById('selectorFA').value = fa;
-            document.getElementById('selectorFAValor').innerText = fa;
+            if (fa === FA_TODOS) {
+                fasSeleccionados.clear();
+            } else if (fasSeleccionados.has(fa)) {
+                fasSeleccionados.delete(fa);
+            } else {
+                fasSeleccionados.add(fa);
+            }
             if (esFAHistorico(fa)) historicosFAVisibles = true;
+            ifasSeleccionados.clear();
+            actualizarTextoSelectorFA();
             actualizarEstadoSelectorFA();
-            cerrarMenuFA();
-            cambiarVistaGlobal();
+            actualizarSelectorIFA(true);
+            document.getElementById('buscadorIFA').value = '';
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
+        }
+
+        function cambiarEquipo(equipo) {
+            equipoActual = equipo;
+            fasSeleccionados.clear();
+            ifasSeleccionados.clear();
+            historicosFAVisibles = false;
+            cacheVistas.clear();
+            inicializarSelectorFA();
+            actualizarSelectorIFA(true);
+            document.getElementById('buscadorIFA').value = '';
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
         }
 
         window.onload = () => {
             if (typeof datosDashboard !== 'undefined') {
                 document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
+                equipoActual = document.getElementById('selectorEquipo').value;
                 inicializarSelectorFA();
-                cambiarVistaGlobal();
+                actualizarSelectorIFA(true);
+                renderizarDashboard();
             }
         };
 
@@ -847,19 +1174,6 @@
                 cerrarMenuIFA();
             }
         });
-
-        function cambiarVistaGlobal() {
-            vistaGlobalFA = document.getElementById('selectorFA').value;
-            actualizarSelectorIFA(true);
-            if (vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA)) {
-                document.getElementById('boxFA').classList.remove('hidden');
-            } else {
-                document.getElementById('boxFA').classList.add('hidden');
-            }
-            document.getElementById('buscadorIFA').value = '';
-            document.getElementById('buscadorCliente').value = '';
-            renderizarDashboard();
-        }
 
         function cambiarSolapa(periodo) {
             periodoActual = periodo;
@@ -946,7 +1260,7 @@
         }
 
         function abrirModalFA(faName) {
-            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].fa_detalles[faName];
+            const data = obtenerVistaActual(periodoActual).fa_detalles[faName];
             if(!data) return;
             document.getElementById('modalTitulo').innerText = `Equipo: ${faName}`;
             mostrarSeccionModal('modalFA');
@@ -958,7 +1272,7 @@
         }
 
         function abrirModalIFA(ifaName) {
-            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual].ifa_detalles[ifaName];
+            const data = obtenerVistaActual(periodoActual).ifa_detalles[ifaName];
             if(!data) return;
             const clientesIdentificados = filtrarClientesIdentificados(data);
             
@@ -985,7 +1299,7 @@
         }
 
         function renderizarModalClienteGraficos(periodoVista) {
-            const data = datosDashboard.vistas[vistaGlobalFA][periodoVista].cliente_detalles[clienteAbiertoActual];
+            const data = obtenerVistaActual(periodoVista).cliente_detalles[clienteAbiertoActual];
             const btnM = document.getElementById('btnModalCliMTD');
             const btnY = document.getElementById('btnModalCliYTD');
             
@@ -1013,7 +1327,7 @@
             });
         }
 
-        // SISTEMA DUAL DE TICKER (IFA vs Cliente)
+        // DRILL-DOWN DE TICKER (IFA, Cliente y Compra/Venta)
         function abrirModalTicker(tickerName) {
             tickerAbiertoActual = tickerName;
             document.getElementById('modalTitulo').innerText = `Activo: ${tickerName}`;
@@ -1022,20 +1336,121 @@
         }
 
         function renderizarGraficoTickerDual(vista) {
-            const dataObj = datosDashboard.vistas[vistaGlobalFA][periodoActual].ticker_detalles[tickerAbiertoActual];
+            const dataObj = obtenerVistaActual(periodoActual).ticker_detalles[tickerAbiertoActual];
             if(!dataObj) return;
-
-            const dataToRender = vista === 'ifa' ? dataObj.ifa : filtrarClientesIdentificados(dataObj.cliente);
-            const bgColor = vista === 'ifa' ? COLORES.cyan : COLORES.emerald;
-            
-            document.getElementById('lblModalTickerSub').innerText = vista === 'ifa' ? 'Top Productores operando este Ticker' : 'Top Clientes operando este Ticker';
 
             const btnI = document.getElementById('btnTkIFA');
             const btnC = document.getElementById('btnTkCli');
+            const btnCV = document.getElementById('btnTkCompraVenta');
             btnI.classList.toggle('active', vista === 'ifa');
             btnC.classList.toggle('active', vista === 'cliente');
+            btnCV.classList.toggle('active', vista === 'compra_venta');
 
             if(modalCharts.ticker) modalCharts.ticker.destroy();
+            const resumen = document.getElementById('resumenCompraVenta');
+            const sinDatos = document.getElementById('sinDatosCompraVenta');
+            const contenedor = document.getElementById('contenedorChartModalTicker');
+            resumen.classList.add('hidden');
+            sinDatos.classList.add('hidden');
+            sinDatos.classList.remove('flex');
+            contenedor.classList.remove('hidden');
+
+            if (vista === 'compra_venta') {
+                const detalle = dataObj.compra_venta || { labels: [], compras: [], ventas: [] };
+                const seleccionados = hayFiltroIFAActivo() ? ifasSeleccionados : null;
+                const todasLasFilas = (detalle.labels || []).map((ifa, i) => ({
+                    ifa,
+                    compra: Math.abs(Number(detalle.compras?.[i] || 0)),
+                    venta: Math.abs(Number(detalle.ventas?.[i] || 0))
+                }));
+                const filasFiltradas = (seleccionados
+                    ? todasLasFilas.filter(item => seleccionados.has(item.ifa))
+                    : todasLasFilas)
+                    .sort((a, b) => (b.compra + b.venta) - (a.compra + a.venta));
+                const filas = filasFiltradas.slice(0, 12);
+                const filasRestantes = filasFiltradas.slice(12);
+                if (filasRestantes.length > 0) {
+                    filas.push({
+                        ifa: 'Otros IFAs',
+                        compra: filasRestantes.reduce((suma, item) => suma + item.compra, 0),
+                        venta: filasRestantes.reduce((suma, item) => suma + item.venta, 0),
+                        esOtros: true
+                    });
+                }
+                const totalCompra = filasFiltradas.reduce((suma, item) => suma + item.compra, 0);
+                const totalVenta = filasFiltradas.reduce((suma, item) => suma + item.venta, 0);
+                const hayDatos = filas.some(item => item.compra !== 0 || item.venta !== 0);
+                const maximoAbsoluto = Math.max(
+                    0,
+                    ...filas.map(item => item.compra),
+                    ...filas.map(item => item.venta)
+                );
+                const limiteEje = maximoAbsoluto > 0 ? maximoAbsoluto * 1.1 : 1;
+
+                document.getElementById('lblModalTickerSub').innerText = filasRestantes.length > 0
+                    ? 'Facturación por Compra vs. Venta · Top 12 IFAs + Otros'
+                    : 'Facturación por Compra vs. Venta';
+                if (!hayDatos) {
+                    contenedor.classList.add('hidden');
+                    sinDatos.classList.remove('hidden');
+                    sinDatos.classList.add('flex');
+                    return;
+                }
+
+                resumen.innerText = `Compra: u$s ${formatoUSD(totalCompra)} · Venta: u$s ${formatoUSD(totalVenta)} · Diferencia: u$s ${formatoUSD(totalCompra - totalVenta)}`;
+                resumen.classList.remove('hidden');
+                modalCharts.ticker = new Chart(document.getElementById('chartModalTicker').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: filas.map(item => item.ifa),
+                        datasets: [
+                            { label: 'Compra', data: filas.map(item => item.compra), backgroundColor: COLORES.emerald, borderRadius: 5 },
+                            { label: 'Venta', data: filas.map(item => -Math.abs(item.venta)), backgroundColor: COLORES.rose, borderRadius: 5 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: { callbacks: { label: item => `${item.dataset.label}: u$s ${formatoUSD(Math.abs(Number(item.raw || 0)))}` } }
+                        },
+                        scales: {
+                            x: { ticks: { maxRotation: 40, minRotation: 0 } },
+                            y: {
+                                min: -limiteEje,
+                                max: limiteEje,
+                                grid: { color: ctx => ctx.tick.value === 0 ? '#64748b' : COLORES.grid },
+                                ticks: { callback: valor => `u$s ${formatoUSD(Math.abs(Number(valor)))}` }
+                            }
+                        },
+                        onClick: (e, els) => {
+                            if (els.length > 0) {
+                                const filaSeleccionada = filas[els[0].index];
+                                if (filaSeleccionada && !filaSeleccionada.esOtros) abrirModalIFA(filaSeleccionada.ifa);
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+
+            let dataToRender = vista === 'ifa' ? dataObj.ifa : filtrarClientesIdentificados(dataObj.cliente);
+            if (vista === 'ifa' && hayFiltroIFAActivo()) {
+                const filtrado = { labels: [], values: [] };
+                (dataToRender?.labels || []).forEach((ifa, i) => {
+                    if (ifasSeleccionados.has(ifa)) {
+                        filtrado.labels.push(ifa);
+                        filtrado.values.push(dataToRender.values?.[i] || 0);
+                    }
+                });
+                dataToRender = filtrado;
+            }
+            const bgColor = vista === 'ifa' ? COLORES.cyan : COLORES.emerald;
+            document.getElementById('lblModalTickerSub').innerText = vista === 'ifa'
+                ? 'Top Productores operando este Ticker'
+                : 'Top Clientes operando este Ticker';
+
             modalCharts.ticker = new Chart(document.getElementById('chartModalTicker').getContext('2d'), {
                 type: 'bar', data: { labels: dataToRender.labels.slice(0, 15), datasets: [{ data: dataToRender.values.slice(0, 15), backgroundColor: bgColor, borderRadius: 5 }] },
                 options: { 
@@ -1054,9 +1469,9 @@
         function renderizarDashboard() {
             if (typeof datosDashboard === 'undefined') return;
             
-            const data = datosDashboard.vistas[vistaGlobalFA][periodoActual];
-            const ifaFiltrado = ifasSeleccionados.size > 0;
-            const detalleIFA = obtenerDetalleIFA();
+            const data = obtenerVistaActual(periodoActual);
+            const ifaFiltrado = hayFiltroIFAActivo();
+            const detalleIFA = ifaFiltrado ? obtenerDetalleIFA() : null;
             const etiquetaIFAs = obtenerEtiquetaIFAsSeleccionados();
             const clientesFuente = ifaFiltrado
                 ? { labels: detalleIFA?.labels || [], values: detalleIFA?.values || [] }
@@ -1133,7 +1548,12 @@
                 }
             }
 
-            const tituloEquipo = vistaGlobalFA === 'EQUIPO' ? 'Team Sproviero' : `Equipo: ${vistaGlobalFA}`;
+            const nombreEquipo = equipoActual === 'TODOS' ? 'Todos los equipos' : `Equipo ${equipoActual}`;
+            const tituloEquipo = fasSeleccionados.size === 0
+                ? nombreEquipo
+                : fasSeleccionados.size === 1
+                    ? `FA: ${Array.from(fasSeleccionados)[0]}`
+                    : `${fasSeleccionados.size} FAs · ${nombreEquipo}`;
             document.getElementById('lblPeriodo').innerText = `${tituloEquipo} - Información ${periodoActual.toUpperCase()}`;
 
             Object.values(graficosActivos).forEach(g => g.destroy());
@@ -1175,13 +1595,13 @@
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(graficosActivos.cliente.data.labels[els[0].index]); } }
             });
 
-            const mostrarGraficoFA = ifaFiltrado || vistaGlobalFA === 'EQUIPO' || esFAHistorico(vistaGlobalFA);
-            document.getElementById('boxFA').classList.toggle('hidden', !mostrarGraficoFA);
+            const mostrarGraficoFA = true;
+            document.getElementById('boxFA').classList.remove('hidden');
 
             if (mostrarGraficoFA) {
                 const datosFAGrafico = ifaFiltrado
                     ? filtrarFAsParaGrafico(obtenerDatosFAPorIFAs(periodoActual))
-                    : filtrarFAsParaGrafico(datosDashboard.vistas.EQUIPO[periodoActual].fa);
+                    : filtrarFAsParaGrafico(data.fa);
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
                     type: 'doughnut', data: { labels: datosFAGrafico.labels, datasets: [{ data: datosFAGrafico.values, backgroundColor: COLORES.palette, borderColor: COLORES.panel, borderWidth: 2 }] },
                     options: {
@@ -1195,8 +1615,7 @@
                         onClick: (e, els) => {
                             if (ifaFiltrado || els.length === 0) return;
                             const faElegido = graficosActivos.fa.data.labels[els[0].index];
-                            if (esFAHistorico(vistaGlobalFA)) seleccionarFA(faElegido);
-                            else abrirModalFA(faElegido);
+                            abrirModalFA(faElegido);
                         }
                     }
                 });
@@ -1239,7 +1658,7 @@
                 const mesBuscado = abreviaturasMes[numeroMes - 1];
                 const datosMTD = ifaFiltrado
                     ? obtenerDetalleIFA('mtd')
-                    : datosDashboard.vistas[vistaGlobalFA]?.mtd;
+                    : obtenerVistaActual('mtd');
 
                 indiceRunRate = etiquetasEvolucion.findIndex(etiqueta =>
                     String(etiqueta || '').trim().toLowerCase().slice(0, 3) === mesBuscado
