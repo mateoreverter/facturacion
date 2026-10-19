@@ -8,8 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
-    <!-- Carga directa del archivo JS -->
+    <!-- Datos divididos para mantener cada archivo por debajo del límite de GitHub -->
     <script src="datos_facturacion.js"></script>
+    <script src="datos_facturacion_ytd.js"></script>
     <style>
         :root { color-scheme: dark; }
         html { background: #020617; }
@@ -359,6 +360,16 @@
     </main>
 
     <script>
+        // El archivo principal contiene MTD y el segundo agrega las vistas YTD.
+        if (typeof datosFacturacionYTD !== 'undefined') {
+            Object.entries(datosFacturacionYTD).forEach(([fa, vistaYTD]) => {
+                if (!datosDashboard.vistas[fa]) datosDashboard.vistas[fa] = {};
+                datosDashboard.vistas[fa].ytd = vistaYTD;
+            });
+        } else {
+            console.error('No se pudo cargar datos_facturacion_ytd.js');
+        }
+
         const formatoUSD = (valor) => valor.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
         const COLORES = {
             emerald: '#34d399',
