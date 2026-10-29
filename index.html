@@ -685,6 +685,10 @@
             (a?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
             (b?.ticker || []).forEach(item => tickers.set(item.t, (tickers.get(item.t) || 0) + Number(item.v || 0)));
             const serieClientes = mapaAserieOrdenada(clientes);
+            const productores = new Map();
+            agregarSerieAMapa(productores, a?.productores?.labels, a?.productores?.values);
+            agregarSerieAMapa(productores, b?.productores?.labels, b?.productores?.values);
+            const serieProductores = mapaAserieOrdenada(productores);
             const fas = new Set([a?.fa, b?.fa].filter(Boolean).flatMap(fa => String(fa).split(' / ')));
             return {
                 fa: Array.from(fas).join(' / ') || 'N/A',
@@ -693,7 +697,22 @@
                 total: Number(a?.total || 0) + Number(b?.total || 0),
                 run_rate: Number(a?.run_rate || 0) + Number(b?.run_rate || 0),
                 fechas: combinarSeriesFechas([a?.fechas, b?.fechas]),
-                ticker: Array.from(tickers.entries()).sort((x, y) => y[1] - x[1]).slice(0, 40).map(([t, v]) => ({ t, v }))
+                ticker: Array.from(tickers.entries()).sort((x, y) => y[1] - x[1]).slice(0, 40).map(([t, v]) => ({ t, v })),
+                productores: serieProductores
+            };
+        }
+
+        function combinarDetalleProductor(a, b) {
+            const clientes = new Map();
+            agregarSerieAMapa(clientes, a?.labels, a?.values);
+            agregarSerieAMapa(clientes, b?.labels, b?.values);
+            const serieClientes = mapaAserieOrdenada(clientes);
+            const fas = new Set([a?.fa, b?.fa].filter(Boolean).flatMap(fa => String(fa).split(' / ')));
+            return {
+                fa: Array.from(fas).join(' / ') || 'N/A',
+                labels: serieClientes.labels,
+                values: serieClientes.values,
+                total: Number(a?.total || 0) + Number(b?.total || 0)
             };
         }
 
@@ -751,7 +770,7 @@
                 mes_plan: '', cumplimiento_ytd: 0, cumplimiento_mtd: 0,
                 fa: { labels: [], values: [] }, ifa: { labels: [], values: [], tooltips: [] },
                 cliente: { labels: [], values: [] }, fechas: { labels: [], values: [], plan_values: [] },
-                ticker: [], fa_detalles: {}, ifa_detalles: {}, cliente_detalles: {}, ticker_detalles: {}
+                ticker: [], fa_detalles: {}, ifa_detalles: {}, productor_detalles: {}, cliente_detalles: {}, ticker_detalles: {}
             };
         }
 
@@ -774,6 +793,7 @@
             const fa = new Map();
             const faDetalles = {};
             const ifaDetalles = {};
+            const productorDetalles = {};
             const clienteDetalles = {};
             const tickerDetalles = {};
 
@@ -801,6 +821,11 @@
                 Object.entries(vista.ifa_detalles || {}).forEach(([claveDetalle, detalle]) => {
                     ifaDetalles[claveDetalle] = ifaDetalles[claveDetalle]
                         ? combinarDetalleIFA(ifaDetalles[claveDetalle], detalle)
+                        : detalle;
+                });
+                Object.entries(vista.productor_detalles || {}).forEach(([claveDetalle, detalle]) => {
+                    productorDetalles[claveDetalle] = productorDetalles[claveDetalle]
+                        ? combinarDetalleProductor(productorDetalles[claveDetalle], detalle)
                         : detalle;
                 });
                 Object.entries(vista.cliente_detalles || {}).forEach(([claveDetalle, detalle]) => {
@@ -848,6 +873,7 @@
                 ticker: Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([t, v]) => ({ t, v })),
                 fa_detalles: faDetalles,
                 ifa_detalles: ifaDetalles,
+                productor_detalles: productorDetalles,
                 cliente_detalles: clienteDetalles,
                 ticker_detalles: tickerDetalles
             };
@@ -859,7 +885,7 @@
             const nombres = new Set();
 
             ['mtd', 'ytd'].forEach(periodo => {
-                (obtenerVistaActual(periodo)?.ifa?.labels || []).forEach(ifa => nombres.add(String(ifa)));
+                Object.keys(obtenerVistaActual(periodo)?.ifa_detalles || {}).forEach(ifa => nombres.add(String(ifa)));
             });
 
             return Array.from(nombres).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
@@ -1075,18 +1101,19 @@
             if (!hayFiltroIFAActivo()) return data.ifa;
 
             const valores = new Map();
-            (data.ifa?.labels || []).forEach((ifa, i) => {
-                valores.set(ifa, {
-                    valor: Number(data.ifa.values?.[i] || 0),
-                    fa: data.ifa.tooltips?.[i] || obtenerFADelIFA(ifa)
+            obtenerIFAsSeleccionados().forEach(ifa => {
+                const detalleIFA = data.ifa_detalles?.[ifa];
+                (detalleIFA?.productores?.labels || []).forEach((productor, i) => {
+                    valores.set(productor, (valores.get(productor) || 0) + Number(detalleIFA.productores.values?.[i] || 0));
                 });
             });
-
-            const seleccionados = obtenerIFAsSeleccionados().map(ifa => ({
-                ifa,
-                valor: valores.get(ifa)?.valor || 0,
-                fa: valores.get(ifa)?.fa || obtenerFADelIFA(ifa)
-            })).sort((a, b) => b.valor - a.valor);
+            const seleccionados = Array.from(valores.entries())
+                .map(([productor, valor]) => ({
+                    ifa: productor,
+                    valor,
+                    fa: data.productor_detalles?.[productor]?.fa || 'N/A'
+                }))
+                .sort((a, b) => b.valor - a.valor);
 
             return {
                 labels: seleccionados.map(item => item.ifa),
@@ -1300,6 +1327,33 @@
             modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
                 type: 'bar', data: { labels: clientesIdentificados.labels.slice(0, 15), datasets: [{ data: clientesIdentificados.values.slice(0, 15), backgroundColor: COLORES.emerald, borderRadius: 5 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, onClick: (e, els) => { if(els.length > 0) abrirModalCliente(modalCharts.ifa.data.labels[els[0].index]); } }
+            });
+        }
+
+        function abrirModalProductor(productorName) {
+            const data = obtenerVistaActual(periodoActual).productor_detalles?.[productorName];
+            if (!data) return;
+            const clientesIdentificados = filtrarClientesIdentificados(data);
+
+            document.getElementById('modalTitulo').innerText = `Productor: ${productorName}`;
+            document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
+            document.getElementById('buscadorClienteModal').value = '';
+            dataModalIFAOriginal.labels = clientesIdentificados.labels;
+            dataModalIFAOriginal.values = clientesIdentificados.values;
+
+            mostrarSeccionModal('modalIFA');
+            if (modalCharts.ifa) modalCharts.ifa.destroy();
+            modalCharts.ifa = new Chart(document.getElementById('chartModalIFA').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: clientesIdentificados.labels.slice(0, 15),
+                    datasets: [{ data: clientesIdentificados.values.slice(0, 15), backgroundColor: COLORES.emerald, borderRadius: 5 }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (e, els) => { if (els.length > 0) abrirModalCliente(modalCharts.ifa.data.labels[els[0].index]); }
+                }
             });
         }
 
@@ -1597,7 +1651,7 @@
                             }
                         }
                     }, 
-                    onClick: (e, els) => { if(els.length > 0) abrirModalIFA(graficosActivos.ifa.data.labels[els[0].index]); } 
+                    onClick: (e, els) => { if(els.length > 0) abrirModalProductor(graficosActivos.ifa.data.labels[els[0].index]); } 
                 }
             });
 
