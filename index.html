@@ -11,6 +11,9 @@
     <!-- Datos divididos para mantener cada archivo por debajo del límite de GitHub -->
     <script src="datos_facturacion.js"></script>
     <script src="datos_facturacion_ytd.js"></script>
+    <script src="datos_facturacion_filtros.js"></script>
+    <script src="datos_facturacion_filtros_ytd.js"></script>
+    <script src="datos_facturacion_filtros_fechas.js"></script>
     <style>
         :root { color-scheme: dark; }
         html { background: #020617; }
@@ -37,18 +40,19 @@
         .panel { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; box-shadow: none; }
         .control-panel { padding: 18px 20px; display: flex; align-items: end; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
         .control-group { display: flex; align-items: end; gap: 18px; flex-wrap: wrap; }
-        .field-block { display: flex; flex-direction: column; gap: 7px; }
-        .field-label { font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
+        .field-block { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+        .field-label { font-size: 9px; line-height: 1; font-weight: 800; letter-spacing: .065em; text-transform: uppercase; color: #94a3b8; }
         .select-control, .search-control { color: #e2e8f0; background: #020617; border: 1px solid #334155; border-radius: 10px; outline: none; transition: border-color .18s, box-shadow .18s; }
         .select-control { min-width: 210px; padding: 9px 12px; font-size: 13px; font-weight: 650; }
-        .team-select { width: 150px; min-width: 150px; }
+        .team-select { width: 138px; min-width: 138px; }
         .search-control { width: 100%; padding: 8px 11px; font-size: 12px; }
         .select-control:focus, .search-control:focus { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
         .search-control::placeholder { color: #64748b; }
         .select-control option { background: #0f172a; color: #e2e8f0; }
-        .fa-select { position: relative; width: 210px; }
-        .ifa-select { width: 270px; }
-        .fa-select-trigger { width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; color: #f8fafc; background: #020617; border: 1px solid #334155; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; transition: border-color .18s, box-shadow .18s; }
+        .fa-select { position: relative; width: 155px; }
+        .ifa-select { width: 205px; }
+        .ticker-select { width: 165px; }
+        .fa-select-trigger { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; color: #f8fafc; background: #020617; border: 1px solid #334155; border-radius: 10px; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; transition: border-color .18s, box-shadow .18s; }
         .fa-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .fa-select-trigger:hover, .fa-select-trigger[aria-expanded="true"] { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
         .fa-select-trigger svg { width: 15px; height: 15px; color: #cbd5e1; transition: transform .18s; }
@@ -80,14 +84,16 @@
         .period-button:hover, .mini-segment:hover { color: #e2e8f0; }
         .period-button.active, .mini-segment.active { color: #34d399; background: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.28); }
 
-        .top-panel { padding: 27px 20px 20px; }
-        .top-row { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
-        .top-controls { display: flex; align-items: end; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
+        .top-panel { padding: 24px 20px 20px; }
+        .top-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+        .top-row > .brand { flex: 1 1 360px; }
+        .top-controls { display: flex; flex: 0 0 auto; min-width: 0; align-items: end; justify-content: flex-end; gap: 10px; flex-wrap: nowrap; }
+        .top-controls .select-control { min-width: 0; min-height: 36px; padding: 8px 10px; font-size: 12px; }
         .updated-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; color: #34d399; background: rgba(16,185,129,.09); border: 1px solid rgba(16,185,129,.36); border-radius: 4px; font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: .025em; white-space: nowrap; }
         .updated-badge strong { color: #34d399; }
-        .top-divider { height: 1px; margin: 28px 0 24px; background: #1e293b; }
-        .period-control { min-width: 208px; }
-        .period-control .period-button { flex: 1; white-space: nowrap; }
+        .top-divider { height: 1px; margin: 24px 0; background: #1e293b; }
+        .period-control { min-width: 180px; }
+        .period-control .period-button { flex: 1; padding: 7px 10px; font-size: 11px; white-space: nowrap; }
 
         .kpi-grid { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(145px, 1fr)); gap: 16px; }
         .kpi-grid.is-ytd { grid-template-columns: repeat(3, minmax(165px, 1fr)); }
@@ -123,6 +129,9 @@
         .search-wrapper { position: relative; width: 192px; }
         .search-wrapper svg { position: absolute; left: 10px; top: 50%; width: 14px; height: 14px; color: #64748b; transform: translateY(-50%); pointer-events: none; }
         .search-wrapper .search-control { padding-left: 31px; }
+        .chart-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+        .top-dimension-control { flex: 0 0 auto; }
+        .top-dimension-control .mini-segment { padding: 7px 10px; font-size: 11px; }
 
         .modal-panel { background: #0f172a; border: 1px solid #334155; border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
         .modal-close { color: #64748b; border-radius: 9px; transition: color .18s, background .18s; }
@@ -130,9 +139,9 @@
         .modal-title { color: #f8fafc; }
         .context-badge { display: inline-flex; margin-top: 6px; padding: 3px 8px; color: #6ee7b7; background: rgba(16,185,129,.10); border: 1px solid rgba(16,185,129,.25); border-radius: 7px; font-size: 10px; font-weight: 800; }
 
-        @media (max-width: 980px) {
+        @media (max-width: 1280px) {
             .top-row { align-items: flex-start; flex-direction: column; }
-            .top-controls { width: 100%; justify-content: space-between; }
+            .top-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; }
             .kpi-grid, .kpi-grid.is-ytd { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 640px) {
@@ -145,11 +154,14 @@
             .control-panel { align-items: stretch; }
             .control-group, .field-block { width: 100%; }
             .select-control { width: 100%; }
-            .fa-select, .ifa-select { width: 100%; }
+            .fa-select, .ifa-select, .ticker-select { width: 100%; }
             .segmented-control { width: 100%; }
             .period-button { flex: 1; }
             .kpi-grid, .kpi-grid.is-ytd { grid-template-columns: 1fr; }
             .chart-header { align-items: stretch; flex-direction: column; }
+            .chart-header-actions { align-items: stretch; flex-direction: column; }
+            .top-dimension-control { width: 100%; }
+            .top-dimension-control .mini-segment { flex: 1; }
             .search-wrapper { width: 100%; }
         }
     </style>
@@ -165,7 +177,7 @@
             <h2 id="modalTitulo" class="modal-title text-2xl font-bold mb-6 pr-8">Detalle</h2>
             
             <div id="modalFA" class="hidden">
-                <h3 class="section-heading mb-4">Top Productores del Equipo</h3>
+                <h3 class="section-heading mb-4">Top Asesores del Equipo</h3>
                 <div class="relative h-[400px]"><canvas id="chartModalFA"></canvas></div>
             </div>
 
@@ -173,7 +185,7 @@
             <div id="modalIFA" class="hidden flex-col h-full">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <div>
-                        <h3 class="section-heading">Top Clientes del Productor</h3>
+                        <h3 id="lblModalPersona" class="section-heading">Top Clientes del Productor</h3>
                         <!-- Aca cambiamos a "FA:" -->
                         <p id="lblModalFAEquipo" class="context-badge"></p>
                     </div>
@@ -288,6 +300,23 @@
                             </div>
                         </div>
                     </div>
+                    <div class="field-block">
+                        <span id="lblSelectorTicker" class="field-label">Filtro de ticker</span>
+                        <div id="selectorTickerControl" class="fa-select ticker-select">
+                            <input id="selectorTicker" type="hidden" value="__TODOS_TICKERS__">
+                            <button id="selectorTickerTrigger" type="button" class="fa-select-trigger" aria-labelledby="lblSelectorTicker selectorTickerValor" aria-haspopup="listbox" aria-expanded="false" onclick="alternarMenuTicker(event)">
+                                <span id="selectorTickerValor">TODOS LOS TICKERS</span>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div id="selectorTickerMenu" class="fa-menu hidden" role="listbox" aria-multiselectable="true" aria-labelledby="lblSelectorTicker">
+                                <div class="selector-menu-search" onclick="event.stopPropagation()">
+                                    <input id="buscadorSelectorTicker" type="search" class="search-control" placeholder="Buscar ticker..." autocomplete="off" oninput="filtrarOpcionesTicker()">
+                                </div>
+                                <div id="selectorTickerOpciones"></div>
+                                <div id="selectorTickerSinResultados" class="selector-empty hidden">No se encontraron tickers</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="segmented-control period-control">
                         <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="period-button active">MTD (Mes)</button>
                         <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="period-button">YTD (Año)</button>
@@ -323,9 +352,15 @@
             <section class="chart-panel flex flex-col">
                 <div class="chart-header">
                     <h3 class="section-heading heading-blue"><span class="heading-icon">♣</span><span id="lblTopProductores">Top Productores</span></h3>
-                    <div class="search-wrapper">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
-                        <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="search-control">
+                    <div class="chart-header-actions">
+                        <div class="segmented-control top-dimension-control" aria-label="Dimensión del ranking">
+                            <button id="btnTopProductores" type="button" class="mini-segment active" onclick="cambiarModoTop('productores')">Productores</button>
+                            <button id="btnTopAsesores" type="button" class="mini-segment" onclick="cambiarModoTop('asesores')">Asesores</button>
+                        </div>
+                        <div class="search-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                            <input type="text" id="buscadorIFA" oninput="filtrarGraficoIFA()" placeholder="Buscar productor..." class="search-control">
+                        </div>
                     </div>
                 </div>
                 <div class="relative h-[300px]"><canvas id="chartIFA"></canvas></div>
@@ -368,6 +403,19 @@
             });
         } else {
             console.error('No se pudo cargar datos_facturacion_ytd.js');
+        }
+
+        // El cubo de filtros se reparte en archivos independientes para que
+        // ninguno se acerque al límite de 25 MiB de GitHub.
+        if (typeof datosFiltrosTicker !== 'undefined'
+            && typeof datosFiltrosTickerYTD !== 'undefined'
+            && typeof datosFiltrosTickerFechasYTD !== 'undefined') {
+            datosFiltrosTicker.ytd = {
+                ...datosFiltrosTickerYTD,
+                fechas: datosFiltrosTickerFechasYTD
+            };
+        } else if (typeof datosFiltrosTicker !== 'undefined' && !datosFiltrosTicker.ytd) {
+            console.error('No se pudieron cargar todos los archivos de filtros YTD');
         }
 
         const formatoUSD = (valor) => valor.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
@@ -478,10 +526,14 @@
         let equipoActual = 'TODOS';
         const FA_TODOS = '__TODOS__';
         const IFA_TODOS = '__TODOS__';
+        const TICKER_TODOS = '__TODOS_TICKERS__';
         let fasSeleccionados = new Set();
         let listaFAsSelector = [];
         let ifasSeleccionados = new Set();
         let listaIFAsSelector = [];
+        let tickersSeleccionados = new Set();
+        let listaTickersSelector = [];
+        let modoTopFacturacion = 'productores';
         let clienteAbiertoActual = ''; 
         let tickerAbiertoActual = '';
         const cacheVistas = new Map();
@@ -991,6 +1043,7 @@
         function alternarMenuIFA(event) {
             event.stopPropagation();
             cerrarMenuFA();
+            cerrarMenuTicker();
             const menu = document.getElementById('selectorIFAMenu');
             const abrir = menu.classList.contains('hidden');
             menu.classList.toggle('hidden', !abrir);
@@ -1023,6 +1076,140 @@
 
             actualizarTextoSelectorIFA();
             actualizarEstadoSelectorIFA();
+            document.getElementById('buscadorCliente').value = '';
+            renderizarDashboard();
+        }
+
+        function obtenerTickersDisponibles() {
+            if (typeof datosFiltrosTicker === 'undefined') return [];
+            return [...(datosFiltrosTicker.catalogos?.ticker || [])]
+                .sort((a, b) => String(a).localeCompare(String(b), 'es', { sensitivity: 'base' }));
+        }
+
+        function crearOpcionTicker(ticker, etiqueta = ticker) {
+            const opcion = document.createElement('button');
+            opcion.type = 'button';
+            opcion.className = 'ifa-option ticker-option';
+            opcion.dataset.value = ticker;
+            opcion.setAttribute('role', 'option');
+
+            const marcador = document.createElement('span');
+            marcador.className = 'ifa-option-marker';
+            marcador.innerText = '✓';
+            marcador.setAttribute('aria-hidden', 'true');
+
+            const nombre = document.createElement('span');
+            nombre.className = 'ifa-option-label';
+            nombre.innerText = etiqueta;
+            opcion.append(marcador, nombre);
+            opcion.addEventListener('click', (event) => {
+                event.stopPropagation();
+                seleccionarTicker(ticker);
+            });
+            return opcion;
+        }
+
+        function renderizarOpcionesTicker() {
+            const texto = normalizarBusqueda(document.getElementById('buscadorSelectorTicker').value);
+            const opciones = [];
+            const etiquetaTodos = 'TODOS LOS TICKERS';
+
+            if (!texto || normalizarBusqueda(etiquetaTodos).includes(texto)) {
+                opciones.push(crearOpcionTicker(TICKER_TODOS, etiquetaTodos));
+            }
+            listaTickersSelector
+                .filter(ticker => normalizarBusqueda(ticker).includes(texto))
+                .forEach(ticker => opciones.push(crearOpcionTicker(ticker)));
+
+            document.getElementById('selectorTickerOpciones').replaceChildren(...opciones);
+            document.getElementById('selectorTickerSinResultados').classList.toggle('hidden', opciones.length > 0);
+            actualizarEstadoSelectorTicker();
+        }
+
+        function actualizarSelectorTicker(reiniciar = false) {
+            listaTickersSelector = obtenerTickersDisponibles();
+            if (reiniciar) {
+                tickersSeleccionados.clear();
+            } else {
+                tickersSeleccionados = new Set(
+                    Array.from(tickersSeleccionados).filter(ticker => listaTickersSelector.includes(ticker))
+                );
+            }
+            actualizarTextoSelectorTicker();
+            document.getElementById('buscadorSelectorTicker').value = '';
+            renderizarOpcionesTicker();
+        }
+
+        function hayFiltroTickerActivo() {
+            return tickersSeleccionados.size > 0 && tickersSeleccionados.size < listaTickersSelector.length;
+        }
+
+        function obtenerEtiquetaTickersSeleccionados() {
+            const seleccionados = Array.from(tickersSeleccionados);
+            if (!hayFiltroTickerActivo()) return 'TODOS LOS TICKERS';
+            if (seleccionados.length === 1) return seleccionados[0];
+            const cantidadExcluidos = listaTickersSelector.length - seleccionados.length;
+            if (seleccionados.length > listaTickersSelector.length / 2) {
+                return cantidadExcluidos === 1
+                    ? '1 ticker excluido'
+                    : `${cantidadExcluidos} tickers excluidos`;
+            }
+            return `${seleccionados.length} tickers seleccionados`;
+        }
+
+        function actualizarTextoSelectorTicker() {
+            document.getElementById('selectorTicker').value = hayFiltroTickerActivo()
+                ? Array.from(tickersSeleccionados).join('|')
+                : TICKER_TODOS;
+            document.getElementById('selectorTickerValor').innerText = obtenerEtiquetaTickersSeleccionados();
+        }
+
+        function actualizarEstadoSelectorTicker() {
+            document.querySelectorAll('.ticker-option').forEach(opcion => {
+                const valor = opcion.dataset.value;
+                const activa = valor === TICKER_TODOS
+                    ? !hayFiltroTickerActivo()
+                    : tickersSeleccionados.has(valor);
+                opcion.classList.toggle('active', activa);
+                opcion.setAttribute('aria-selected', activa ? 'true' : 'false');
+            });
+        }
+
+        function alternarMenuTicker(event) {
+            event.stopPropagation();
+            cerrarMenuFA();
+            cerrarMenuIFA();
+            const menu = document.getElementById('selectorTickerMenu');
+            const abrir = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden', !abrir);
+            document.getElementById('selectorTickerTrigger').setAttribute('aria-expanded', abrir ? 'true' : 'false');
+            if (abrir) {
+                document.getElementById('buscadorSelectorTicker').value = '';
+                renderizarOpcionesTicker();
+                setTimeout(() => document.getElementById('buscadorSelectorTicker').focus(), 0);
+            }
+        }
+
+        function cerrarMenuTicker() {
+            document.getElementById('selectorTickerMenu').classList.add('hidden');
+            document.getElementById('selectorTickerTrigger').setAttribute('aria-expanded', 'false');
+        }
+
+        function filtrarOpcionesTicker() {
+            renderizarOpcionesTicker();
+        }
+
+        function seleccionarTicker(ticker) {
+            if (ticker === TICKER_TODOS) {
+                tickersSeleccionados = new Set(listaTickersSelector);
+            } else if (tickersSeleccionados.has(ticker)) {
+                tickersSeleccionados.delete(ticker);
+            } else {
+                tickersSeleccionados.add(ticker);
+            }
+            actualizarTextoSelectorTicker();
+            actualizarEstadoSelectorTicker();
+            document.getElementById('buscadorIFA').value = '';
             document.getElementById('buscadorCliente').value = '';
             renderizarDashboard();
         }
@@ -1140,9 +1327,259 @@
             };
         }
 
+        function obtenerDatosAsesoresFiltrados(data) {
+            const detalles = data?.ifa_detalles || {};
+            const nombres = hayFiltroIFAActivo()
+                ? obtenerIFAsSeleccionados()
+                : Object.keys(detalles);
+            const filas = nombres
+                .map(ifa => ({
+                    ifa,
+                    valor: Number(detalles[ifa]?.total || 0),
+                    fa: detalles[ifa]?.fa || obtenerFADelIFA(ifa)
+                }))
+                .filter(item => item.valor !== 0)
+                .sort((a, b) => b.valor - a.valor);
+            return {
+                labels: filas.map(item => item.ifa),
+                values: filas.map(item => item.valor),
+                tooltips: filas.map(item => item.fa)
+            };
+        }
+
+        function obtenerFechaCorte() {
+            const [dia = 1, mes = 1, anio = 2026] = String(datosDashboard.ultima_actualizacion || '').split('/').map(Number);
+            return { dia, mes, anio };
+        }
+
+        function obtenerFilasCuboFiltradas(periodo = periodoActual, filtros = {}) {
+            if (typeof datosFiltrosTicker === 'undefined') return [];
+            const catalogos = datosFiltrosTicker.catalogos || {};
+            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
+            const tickersPermitidos = filtros.tickers
+                ? new Set(filtros.tickers)
+                : hayFiltroTickerActivo() ? new Set(tickersSeleccionados) : null;
+
+            return (datosFiltrosTicker[periodo]?.filas || []).filter(fila => {
+                const fa = catalogos.fa?.[fila[0]];
+                const ifa = catalogos.ifa?.[fila[1]];
+                const productor = catalogos.productor?.[fila[2]];
+                const cliente = catalogos.cliente?.[fila[3]];
+                const ticker = catalogos.ticker?.[fila[4]];
+                return fasPermitidos.has(fa)
+                    && (!ifasPermitidos || ifasPermitidos.has(ifa))
+                    && (!tickersPermitidos || tickersPermitidos.has(ticker))
+                    && (!filtros.asesor || filtros.asesor === ifa)
+                    && (!filtros.productor || filtros.productor === productor)
+                    && (!filtros.cliente || filtros.cliente === cliente);
+            });
+        }
+
+        function obtenerFechasCuboFiltradas(periodo = periodoActual, filtros = {}) {
+            if (typeof datosFiltrosTicker === 'undefined') return [];
+            const catalogos = datosFiltrosTicker.catalogos || {};
+            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
+            const tickersPermitidos = filtros.tickers
+                ? new Set(filtros.tickers)
+                : hayFiltroTickerActivo() ? new Set(tickersSeleccionados) : null;
+
+            return (datosFiltrosTicker[periodo]?.fechas || []).filter(fila => {
+                const fa = catalogos.fa?.[fila[0]];
+                const ifa = catalogos.ifa?.[fila[1]];
+                const cliente = catalogos.cliente?.[fila[2]];
+                const ticker = catalogos.ticker?.[fila[3]];
+                return fasPermitidos.has(fa)
+                    && (!ifasPermitidos || ifasPermitidos.has(ifa))
+                    && (!tickersPermitidos || tickersPermitidos.has(ticker))
+                    && (!filtros.asesor || filtros.asesor === ifa)
+                    && (!filtros.cliente || filtros.cliente === cliente);
+            });
+        }
+
+        function serieDesdeMapa(mapa) {
+            return mapaAserieOrdenada(mapa);
+        }
+
+        function obtenerAnaliticaTicker(periodo = periodoActual) {
+            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const filas = obtenerFilasCuboFiltradas(periodo);
+            const productores = new Map();
+            const asesores = new Map();
+            const clientes = new Map();
+            const fas = new Map();
+            const tickers = new Map();
+            const fasPorProductor = new Map();
+            const fasPorAsesor = new Map();
+            let total = 0;
+
+            filas.forEach(fila => {
+                const fa = catalogos.fa?.[fila[0]];
+                const asesor = catalogos.ifa?.[fila[1]];
+                const productor = catalogos.productor?.[fila[2]];
+                const cliente = catalogos.cliente?.[fila[3]];
+                const ticker = catalogos.ticker?.[fila[4]];
+                const valor = Number(fila[5] || 0);
+                total += valor;
+                productores.set(productor, (productores.get(productor) || 0) + valor);
+                asesores.set(asesor, (asesores.get(asesor) || 0) + valor);
+                clientes.set(cliente, (clientes.get(cliente) || 0) + valor);
+                fas.set(fa, (fas.get(fa) || 0) + valor);
+                tickers.set(ticker, (tickers.get(ticker) || 0) + valor);
+                if (!fasPorProductor.has(productor)) fasPorProductor.set(productor, new Set());
+                if (!fasPorAsesor.has(asesor)) fasPorAsesor.set(asesor, new Set());
+                fasPorProductor.get(productor).add(fa);
+                fasPorAsesor.get(asesor).add(fa);
+            });
+
+            const serieProductores = serieDesdeMapa(productores);
+            serieProductores.tooltips = serieProductores.labels.map(nombre => Array.from(fasPorProductor.get(nombre) || []).join(' / ') || 'N/A');
+            const serieAsesores = serieDesdeMapa(asesores);
+            serieAsesores.tooltips = serieAsesores.labels.map(nombre => Array.from(fasPorAsesor.get(nombre) || []).join(' / ') || 'N/A');
+
+            const mapaFechas = new Map();
+            obtenerFechasCuboFiltradas(periodo).forEach(fila => {
+                const clave = fila[4];
+                mapaFechas.set(clave, (mapaFechas.get(clave) || 0) + Number(fila[5] || 0));
+            });
+            const corte = obtenerFechaCorte();
+            let fechas;
+            if (periodo === 'ytd') {
+                const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                fechas = {
+                    labels: meses,
+                    values: meses.map((_, i) => i + 1 <= corte.mes ? Number(mapaFechas.get(i + 1) || 0) : null)
+                };
+            } else {
+                const ordenadas = Array.from(mapaFechas.entries()).sort((a, b) => ordenarEtiquetasFecha(a[0], b[0]));
+                fechas = {
+                    labels: ordenadas.map(item => item[0]),
+                    values: ordenadas.map(item => item[1])
+                };
+            }
+
+            const diasMes = new Date(corte.anio, corte.mes, 0).getDate();
+            const runRate = periodo === 'mtd' && corte.dia > 0 ? (total / corte.dia) * diasMes : 0;
+            return {
+                total,
+                run_rate: runRate,
+                productores: serieProductores,
+                asesores: serieAsesores,
+                cliente: serieDesdeMapa(clientes),
+                fa: serieDesdeMapa(fas),
+                ticker: Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([t, v]) => ({ t, v })),
+                fechas
+            };
+        }
+
+        function obtenerDetallePersonaCubo(tipo, nombre, periodo = periodoActual) {
+            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const filtros = tipo === 'productor' ? { productor: nombre } : { asesor: nombre };
+            const filas = obtenerFilasCuboFiltradas(periodo, filtros);
+            const clientes = new Map();
+            const fas = new Set();
+            let total = 0;
+            filas.forEach(fila => {
+                const cliente = catalogos.cliente?.[fila[3]];
+                const valor = Number(fila[5] || 0);
+                clientes.set(cliente, (clientes.get(cliente) || 0) + valor);
+                fas.add(catalogos.fa?.[fila[0]]);
+                total += valor;
+            });
+            const serie = serieDesdeMapa(clientes);
+            return { ...serie, total, fa: Array.from(fas).filter(Boolean).join(' / ') || 'N/A' };
+        }
+
+        function obtenerDetalleClienteCubo(cliente, periodo = periodoActual) {
+            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const filas = obtenerFilasCuboFiltradas(periodo, { cliente });
+            const tickers = new Map();
+            let total = 0;
+            filas.forEach(fila => {
+                const ticker = catalogos.ticker?.[fila[4]];
+                const valor = Number(fila[5] || 0);
+                tickers.set(ticker, (tickers.get(ticker) || 0) + valor);
+                total += valor;
+            });
+            const fechasMapa = new Map();
+            obtenerFechasCuboFiltradas(periodo, { cliente }).forEach(fila => {
+                fechasMapa.set(fila[4], (fechasMapa.get(fila[4]) || 0) + Number(fila[5] || 0));
+            });
+            let fechas;
+            if (periodo === 'ytd') {
+                const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                const corte = obtenerFechaCorte();
+                fechas = {
+                    labels: meses,
+                    values: meses.map((_, i) => i + 1 <= corte.mes ? Number(fechasMapa.get(i + 1) || 0) : null)
+                };
+            } else {
+                const ordenadas = Array.from(fechasMapa.entries()).sort((a, b) => ordenarEtiquetasFecha(a[0], b[0]));
+                fechas = { labels: ordenadas.map(item => item[0]), values: ordenadas.map(item => item[1]) };
+            }
+            return {
+                total,
+                fechas,
+                ticker: Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([t, v]) => ({ t, v }))
+            };
+        }
+
+        function obtenerDetalleTickerCubo(ticker, periodo = periodoActual) {
+            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const filas = obtenerFilasCuboFiltradas(periodo, { tickers: [ticker] });
+            const asesores = new Map();
+            const clientes = new Map();
+            filas.forEach(fila => {
+                const asesor = catalogos.ifa?.[fila[1]];
+                const cliente = catalogos.cliente?.[fila[3]];
+                const valor = Number(fila[5] || 0);
+                asesores.set(asesor, (asesores.get(asesor) || 0) + valor);
+                clientes.set(cliente, (clientes.get(cliente) || 0) + valor);
+            });
+
+            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
+            const compraVenta = new Map();
+            (datosFiltrosTicker?.[periodo]?.lados || []).forEach(fila => {
+                const fa = catalogos.fa?.[fila[0]];
+                const asesor = catalogos.ifa?.[fila[1]];
+                const tickerFila = catalogos.ticker?.[fila[2]];
+                if (tickerFila !== ticker || !fasPermitidos.has(fa) || (ifasPermitidos && !ifasPermitidos.has(asesor))) return;
+                const actual = compraVenta.get(asesor) || { compra: 0, venta: 0 };
+                if (fila[3] === 0) actual.compra += Number(fila[4] || 0);
+                else actual.venta += Number(fila[4] || 0);
+                compraVenta.set(asesor, actual);
+            });
+            const cvOrdenado = Array.from(compraVenta.entries()).sort((a, b) => (b[1].compra + b[1].venta) - (a[1].compra + a[1].venta));
+            const totalCompra = cvOrdenado.reduce((suma, item) => suma + item[1].compra, 0);
+            const totalVenta = cvOrdenado.reduce((suma, item) => suma + item[1].venta, 0);
+            return {
+                ifa: serieDesdeMapa(asesores),
+                cliente: serieDesdeMapa(clientes),
+                compra_venta: {
+                    labels: cvOrdenado.map(item => item[0]),
+                    compras: cvOrdenado.map(item => item[1].compra),
+                    ventas: cvOrdenado.map(item => item[1].venta),
+                    total_compra: totalCompra,
+                    total_venta: totalVenta,
+                    diferencia: totalCompra - totalVenta
+                }
+            };
+        }
+
+        function cambiarModoTop(modo) {
+            modoTopFacturacion = modo === 'asesores' ? 'asesores' : 'productores';
+            document.getElementById('btnTopProductores').classList.toggle('active', modoTopFacturacion === 'productores');
+            document.getElementById('btnTopAsesores').classList.toggle('active', modoTopFacturacion === 'asesores');
+            document.getElementById('buscadorIFA').value = '';
+            renderizarDashboard();
+        }
+
         function alternarMenuFA(event) {
             event.stopPropagation();
             cerrarMenuIFA();
+            cerrarMenuTicker();
             const menu = document.getElementById('selectorFAMenu');
             const abrir = menu.classList.contains('hidden');
             menu.classList.toggle('hidden', !abrir);
@@ -1197,6 +1634,7 @@
                 equipoActual = document.getElementById('selectorEquipo').value;
                 inicializarSelectorFA();
                 actualizarSelectorIFA(true);
+                actualizarSelectorTicker(true);
                 renderizarDashboard();
             }
         };
@@ -1204,12 +1642,14 @@
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#selectorFAControl')) cerrarMenuFA();
             if (!event.target.closest('#selectorIFAControl')) cerrarMenuIFA();
+            if (!event.target.closest('#selectorTickerControl')) cerrarMenuTicker();
         });
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 cerrarMenuFA();
                 cerrarMenuIFA();
+                cerrarMenuTicker();
             }
         });
 
@@ -1310,11 +1750,14 @@
         }
 
         function abrirModalIFA(ifaName) {
-            const data = obtenerVistaActual(periodoActual).ifa_detalles[ifaName];
+            const data = hayFiltroTickerActivo()
+                ? obtenerDetallePersonaCubo('asesor', ifaName)
+                : obtenerVistaActual(periodoActual).ifa_detalles[ifaName];
             if(!data) return;
             const clientesIdentificados = filtrarClientesIdentificados(data);
             
-            document.getElementById('modalTitulo').innerText = `Productor: ${ifaName}`;
+            document.getElementById('modalTitulo').innerText = `Asesor: ${ifaName}`;
+            document.getElementById('lblModalPersona').innerText = 'Top Clientes del Asesor';
             document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
             document.getElementById('buscadorClienteModal').value = '';
             
@@ -1331,11 +1774,14 @@
         }
 
         function abrirModalProductor(productorName) {
-            const data = obtenerVistaActual(periodoActual).productor_detalles?.[productorName];
+            const data = (hayFiltroTickerActivo() || hayFiltroIFAActivo()) && typeof datosFiltrosTicker !== 'undefined'
+                ? obtenerDetallePersonaCubo('productor', productorName)
+                : obtenerVistaActual(periodoActual).productor_detalles?.[productorName];
             if (!data) return;
             const clientesIdentificados = filtrarClientesIdentificados(data);
 
             document.getElementById('modalTitulo').innerText = `Productor: ${productorName}`;
+            document.getElementById('lblModalPersona').innerText = 'Top Clientes del Productor';
             document.getElementById('lblModalFAEquipo').innerText = `FA: ${data.fa}`;
             document.getElementById('buscadorClienteModal').value = '';
             dataModalIFAOriginal.labels = clientesIdentificados.labels;
@@ -1364,7 +1810,9 @@
         }
 
         function renderizarModalClienteGraficos(periodoVista) {
-            const data = obtenerVistaActual(periodoVista).cliente_detalles[clienteAbiertoActual];
+            const data = (hayFiltroTickerActivo() || hayFiltroIFAActivo()) && typeof datosFiltrosTicker !== 'undefined'
+                ? obtenerDetalleClienteCubo(clienteAbiertoActual, periodoVista)
+                : obtenerVistaActual(periodoVista).cliente_detalles[clienteAbiertoActual];
             const btnM = document.getElementById('btnModalCliMTD');
             const btnY = document.getElementById('btnModalCliYTD');
             
@@ -1401,7 +1849,9 @@
         }
 
         function renderizarGraficoTickerDual(vista) {
-            const dataObj = obtenerVistaActual(periodoActual).ticker_detalles[tickerAbiertoActual];
+            const dataObj = typeof datosFiltrosTicker !== 'undefined'
+                ? obtenerDetalleTickerCubo(tickerAbiertoActual, periodoActual)
+                : obtenerVistaActual(periodoActual).ticker_detalles[tickerAbiertoActual];
             if(!dataObj) return;
 
             const btnI = document.getElementById('btnTkIFA');
@@ -1513,7 +1963,7 @@
             }
             const bgColor = vista === 'ifa' ? COLORES.cyan : COLORES.emerald;
             document.getElementById('lblModalTickerSub').innerText = vista === 'ifa'
-                ? 'Top Productores operando este Ticker'
+                ? 'Top Asesores operando este Ticker'
                 : 'Top Clientes operando este Ticker';
 
             modalCharts.ticker = new Chart(document.getElementById('chartModalTicker').getContext('2d'), {
@@ -1536,39 +1986,56 @@
             
             const data = obtenerVistaActual(periodoActual);
             const ifaFiltrado = hayFiltroIFAActivo();
-            const detalleIFA = ifaFiltrado ? obtenerDetalleIFA() : null;
+            const tickerFiltrado = hayFiltroTickerActivo();
+            const filtroSinPlan = ifaFiltrado || tickerFiltrado;
+            const analiticaTicker = tickerFiltrado ? obtenerAnaliticaTicker(periodoActual) : null;
+            const detalleIFA = ifaFiltrado && !tickerFiltrado ? obtenerDetalleIFA() : null;
             const etiquetaIFAs = obtenerEtiquetaIFAsSeleccionados();
-            const clientesFuente = ifaFiltrado
+            const etiquetaTickers = obtenerEtiquetaTickersSeleccionados();
+            const clientesFuente = tickerFiltrado
+                ? analiticaTicker.cliente
+                : ifaFiltrado
                 ? { labels: detalleIFA?.labels || [], values: detalleIFA?.values || [] }
                 : data.cliente;
-            const datosTickerVista = ifaFiltrado ? (detalleIFA?.ticker || []) : data.ticker;
-            const fechasVista = ifaFiltrado
+            const datosTickerVista = tickerFiltrado
+                ? analiticaTicker.ticker
+                : ifaFiltrado ? (detalleIFA?.ticker || []) : data.ticker;
+            const fechasVista = tickerFiltrado
+                ? analiticaTicker.fechas
+                : ifaFiltrado
                 ? (detalleIFA?.fechas || { labels: [], values: [] })
                 : data.fechas;
-            const datosIFAVista = obtenerDatosIFAsFiltrados(data);
-            const totalVista = ifaFiltrado ? Number(detalleIFA?.total || 0) : Number(data.total || 0);
-            const runRateVista = ifaFiltrado ? Number(detalleIFA?.run_rate || 0) : Number(data.run_rate || 0);
+            const datosTopVista = tickerFiltrado
+                ? (modoTopFacturacion === 'productores' ? analiticaTicker.productores : analiticaTicker.asesores)
+                : (modoTopFacturacion === 'productores' ? obtenerDatosIFAsFiltrados(data) : obtenerDatosAsesoresFiltrados(data));
+            const totalVista = tickerFiltrado
+                ? Number(analiticaTicker.total || 0)
+                : ifaFiltrado ? Number(detalleIFA?.total || 0) : Number(data.total || 0);
+            const runRateVista = tickerFiltrado
+                ? Number(analiticaTicker.run_rate || 0)
+                : ifaFiltrado ? Number(detalleIFA?.run_rate || 0) : Number(data.run_rate || 0);
             
-            dataIFAOriginal.labels = datosIFAVista.labels;
-            dataIFAOriginal.values = datosIFAVista.values;
-            dataIFAOriginal.tooltips = datosIFAVista.tooltips;
+            dataIFAOriginal.labels = datosTopVista.labels;
+            dataIFAOriginal.values = datosTopVista.values;
+            dataIFAOriginal.tooltips = datosTopVista.tooltips || datosTopVista.labels.map(() => 'N/A');
             
             const clientesIdentificados = filtrarClientesIdentificados(clientesFuente);
             dataClienteOriginal.labels = clientesIdentificados.labels;
             dataClienteOriginal.values = clientesIdentificados.values;
 
-            document.getElementById('lblTopClientes').innerText = ifaFiltrado
-                ? `Top Clientes · ${etiquetaIFAs}`
-                : 'Top Clientes';
-            document.getElementById('lblTicker').innerText = ifaFiltrado
-                ? `Proporción por Ticker · ${etiquetaIFAs}`
-                : 'Proporción por Ticker';
-            document.getElementById('lblTopProductores').innerText = ifaFiltrado
-                ? `Top Productores · ${etiquetaIFAs}`
-                : 'Top Productores';
-            document.getElementById('lblFA').innerText = ifaFiltrado
-                ? `Facturación por FA · ${etiquetaIFAs}`
-                : 'Facturación por FA';
+            const contextoFiltros = [
+                ifaFiltrado ? etiquetaIFAs : '',
+                tickerFiltrado ? etiquetaTickers : ''
+            ].filter(Boolean).join(' · ');
+            const conContexto = titulo => contextoFiltros ? `${titulo} · ${contextoFiltros}` : titulo;
+            const tituloTop = modoTopFacturacion === 'productores' ? 'Top Productores' : 'Top Asesores';
+            document.getElementById('lblTopClientes').innerText = conContexto('Top Clientes');
+            document.getElementById('lblTicker').innerText = conContexto('Proporción por Ticker');
+            document.getElementById('lblTopProductores').innerText = conContexto(tituloTop);
+            document.getElementById('lblFA').innerText = conContexto('Facturación por FA');
+            document.getElementById('buscadorIFA').placeholder = modoTopFacturacion === 'productores'
+                ? 'Buscar productor...'
+                : 'Buscar asesor...';
             
             document.getElementById('kpiTotal').innerText = formatoUSD(totalVista);
             document.getElementById('kpiRunRate').innerText = formatoUSD(runRateVista);
@@ -1577,18 +2044,18 @@
             const kpiRunRateCard = document.getElementById('kpiRunRateCard');
             const kpiPlanPrefijo = document.getElementById('kpiPlanPrefijo');
             const kpiCumplimientoSufijo = document.getElementById('kpiCumplimientoSufijo');
-            kpiPlanPrefijo.classList.toggle('hidden', ifaFiltrado);
-            kpiCumplimientoSufijo.classList.toggle('hidden', ifaFiltrado);
+            kpiPlanPrefijo.classList.toggle('hidden', filtroSinPlan);
+            kpiCumplimientoSufijo.classList.toggle('hidden', filtroSinPlan);
             
             if (periodoActual === 'mtd') {
                 kpiRunRateCard.classList.remove('hidden');
                 kpiGrid.classList.remove('is-ytd');
                 document.getElementById('lblPlan').innerText = 'Plan Mensual';
-                if (ifaFiltrado) {
+                if (filtroSinPlan) {
                     document.getElementById('kpiPlan').innerText = '—';
-                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan individual por IFA';
+                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan para el filtro analítico';
                     document.getElementById('kpiCumplimiento').innerText = '—';
-                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible para el filtro de IFA';
+                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible con IFA o ticker filtrado';
                 } else {
                     document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
                     document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
@@ -1599,11 +2066,11 @@
                 kpiRunRateCard.classList.add('hidden');
                 kpiGrid.classList.add('is-ytd');
                 document.getElementById('lblPlan').innerText = "Plan Anual";
-                if (ifaFiltrado) {
+                if (filtroSinPlan) {
                     document.getElementById('kpiPlan').innerText = '—';
-                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan individual por IFA';
+                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan para el filtro analítico';
                     document.getElementById('kpiCumplimiento').innerText = '—';
-                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible para el filtro de IFA';
+                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible con IFA o ticker filtrado';
                 } else {
                     document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
                     document.getElementById('lblPlanDetalle').innerText = "Objetivo anual 2026";
@@ -1651,7 +2118,12 @@
                             }
                         }
                     }, 
-                    onClick: (e, els) => { if(els.length > 0) abrirModalProductor(graficosActivos.ifa.data.labels[els[0].index]); } 
+                    onClick: (e, els) => {
+                        if (els.length === 0) return;
+                        const nombre = graficosActivos.ifa.data.labels[els[0].index];
+                        if (modoTopFacturacion === 'productores') abrirModalProductor(nombre);
+                        else abrirModalIFA(nombre);
+                    }
                 }
             });
 
@@ -1664,7 +2136,9 @@
             document.getElementById('boxFA').classList.remove('hidden');
 
             if (mostrarGraficoFA) {
-                const datosFAGrafico = ifaFiltrado
+                const datosFAGrafico = tickerFiltrado
+                    ? filtrarFAsParaGrafico(analiticaTicker.fa)
+                    : ifaFiltrado
                     ? filtrarFAsParaGrafico(obtenerDatosFAPorIFAs(periodoActual))
                     : filtrarFAsParaGrafico(data.fa);
                 graficosActivos.fa = new Chart(document.getElementById('chartFA').getContext('2d'), {
@@ -1678,7 +2152,7 @@
                             etiquetasMontosFA: { display: true }
                         },
                         onClick: (e, els) => {
-                            if (ifaFiltrado || els.length === 0) return;
+                            if (filtroSinPlan || els.length === 0) return;
                             const faElegido = graficosActivos.fa.data.labels[els[0].index];
                             abrirModalFA(faElegido);
                         }
@@ -1721,7 +2195,9 @@
                 const numeroMes = Number(partesFecha[1]);
                 const abreviaturasMes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
                 const mesBuscado = abreviaturasMes[numeroMes - 1];
-                const datosMTD = ifaFiltrado
+                const datosMTD = tickerFiltrado
+                    ? obtenerAnaliticaTicker('mtd')
+                    : ifaFiltrado
                     ? obtenerDetalleIFA('mtd')
                     : obtenerVistaActual('mtd');
 
@@ -1750,7 +2226,7 @@
                 tension: 0.3
             }];
 
-            if (periodoActual === 'ytd' && !ifaFiltrado && data.fechas.plan_values?.length) {
+            if (periodoActual === 'ytd' && !filtroSinPlan && data.fechas.plan_values?.length) {
                 datasetsEvolucion.push({
                     label: 'Plan mensual',
                     data: data.fechas.plan_values,
@@ -1764,8 +2240,8 @@
                 });
             }
 
-            document.getElementById('lblEvolucion').innerText = ifaFiltrado
-                ? `Evolución de Facturación · ${etiquetaIFAs}`
+            document.getElementById('lblEvolucion').innerText = contextoFiltros
+                ? `Evolución de Facturación · ${contextoFiltros}`
                 : periodoActual === 'ytd'
                     ? 'Evolución de Facturación vs. Plan Mensual'
                     : 'Evolución de Facturación';
