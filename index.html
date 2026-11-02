@@ -998,9 +998,12 @@
         }
 
         function actualizarSelectorIFA(reiniciar = false) {
+            const listaAnterior = listaIFAsSelector;
+            const estabanTodosSeleccionados = listaAnterior.length > 0
+                && ifasSeleccionados.size === listaAnterior.length;
             listaIFAsSelector = obtenerIFAsDisponibles();
-            if (reiniciar) {
-                ifasSeleccionados.clear();
+            if (reiniciar || estabanTodosSeleccionados) {
+                ifasSeleccionados = new Set(listaIFAsSelector);
             } else {
                 ifasSeleccionados = new Set(
                     Array.from(ifasSeleccionados).filter(ifa => listaIFAsSelector.includes(ifa))
@@ -1017,12 +1020,16 @@
         }
 
         function hayFiltroIFAActivo() {
-            return ifasSeleccionados.size > 0 && ifasSeleccionados.size < listaIFAsSelector.length;
+            return listaIFAsSelector.length > 0
+                && ifasSeleccionados.size < listaIFAsSelector.length;
         }
 
         function obtenerEtiquetaIFAsSeleccionados() {
             const seleccionados = obtenerIFAsSeleccionados();
-            if (!hayFiltroIFAActivo()) return 'TODOS LOS IFAs';
+            if (listaIFAsSelector.length === 0 || seleccionados.length === listaIFAsSelector.length) {
+                return 'TODOS LOS IFAs';
+            }
+            if (seleccionados.length === 0) return 'NINGÚN IFA';
             if (seleccionados.length === 1) return seleccionados[0];
             const cantidadExcluidos = listaIFAsSelector.length - seleccionados.length;
             if (seleccionados.length > listaIFAsSelector.length / 2) {
@@ -1035,9 +1042,9 @@
 
         function actualizarTextoSelectorIFA() {
             const etiqueta = obtenerEtiquetaIFAsSeleccionados();
-            document.getElementById('selectorIFA').value = hayFiltroIFAActivo()
-                ? obtenerIFAsSeleccionados().join('|')
-                : IFA_TODOS;
+            document.getElementById('selectorIFA').value = ifasSeleccionados.size === listaIFAsSelector.length
+                ? IFA_TODOS
+                : obtenerIFAsSeleccionados().join('|');
             document.getElementById('selectorIFAValor').innerText = etiqueta;
         }
 
@@ -1045,7 +1052,7 @@
             document.querySelectorAll('.ifa-option').forEach(opcion => {
                 const valor = opcion.dataset.value;
                 const activa = valor === IFA_TODOS
-                    ? !hayFiltroIFAActivo()
+                    ? ifasSeleccionados.size === listaIFAsSelector.length
                     : ifasSeleccionados.has(valor);
                 opcion.classList.toggle('active', activa);
                 opcion.setAttribute('aria-selected', activa ? 'true' : 'false');
@@ -1079,7 +1086,11 @@
 
         function seleccionarIFA(ifa) {
             if (ifa === IFA_TODOS) {
-                ifasSeleccionados = new Set(listaIFAsSelector);
+                if (listaIFAsSelector.length > 0 && ifasSeleccionados.size === listaIFAsSelector.length) {
+                    ifasSeleccionados.clear();
+                } else {
+                    ifasSeleccionados = new Set(listaIFAsSelector);
+                }
             } else if (ifasSeleccionados.has(ifa)) {
                 ifasSeleccionados.delete(ifa);
             } else {
