@@ -596,6 +596,18 @@
                 : obtenerFAsActivosEquipo();
         }
 
+        function obtenerFAsParaDatos() {
+            if (fasSeleccionados.size > 0) return Array.from(fasSeleccionados);
+
+            const fas = new Set(obtenerFAsActivosEquipo());
+            if (equipoActual === 'SS' || equipoActual === 'TODOS') {
+                (datosDashboard.lista_fas || [])
+                    .filter(esFAHistorico)
+                    .forEach(fa => fas.add(fa));
+            }
+            return Array.from(fas);
+        }
+
         function obtenerEtiquetaFAsSeleccionados() {
             const seleccionados = Array.from(fasSeleccionados);
             if (seleccionados.length === 0) return 'TODOS LOS FAs';
@@ -827,7 +839,7 @@
         }
 
         function obtenerVistaActual(periodo = periodoActual) {
-            const fas = obtenerFAsEfectivos().filter(fa => datosDashboard.vistas?.[fa]?.[periodo]);
+            const fas = obtenerFAsParaDatos().filter(fa => datosDashboard.vistas?.[fa]?.[periodo]);
             const clave = `${periodo}|${fas.slice().sort().join('|')}`;
             if (cacheVistas.has(clave)) return cacheVistas.get(clave);
             if (fas.length === 0) return crearVistaVacia();
@@ -1312,7 +1324,7 @@
         function obtenerDatosFAPorIFAs(periodo = periodoActual) {
             const porFA = new Map();
 
-            obtenerFAsEfectivos().forEach(fa => {
+            obtenerFAsParaDatos().forEach(fa => {
                 const detallesFA = datosDashboard.vistas?.[fa]?.[periodo]?.ifa_detalles || {};
                 obtenerIFAsSeleccionados().forEach(ifa => {
                     const total = Number(detallesFA[ifa]?.total || 0);
@@ -1355,7 +1367,7 @@
         function obtenerFilasCuboFiltradas(periodo = periodoActual, filtros = {}) {
             if (typeof datosFiltrosTicker === 'undefined') return [];
             const catalogos = datosFiltrosTicker.catalogos || {};
-            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const tickersPermitidos = filtros.tickers
                 ? new Set(filtros.tickers)
@@ -1379,7 +1391,7 @@
         function obtenerFechasCuboFiltradas(periodo = periodoActual, filtros = {}) {
             if (typeof datosFiltrosTicker === 'undefined') return [];
             const catalogos = datosFiltrosTicker.catalogos || {};
-            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const tickersPermitidos = filtros.tickers
                 ? new Set(filtros.tickers)
@@ -1538,7 +1550,7 @@
                 clientes.set(cliente, (clientes.get(cliente) || 0) + valor);
             });
 
-            const fasPermitidos = new Set(obtenerFAsEfectivos());
+            const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const compraVenta = new Map();
             (datosFiltrosTicker?.[periodo]?.lados || []).forEach(fila => {
