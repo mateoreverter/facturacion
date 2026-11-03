@@ -14,6 +14,7 @@
     <script src="datos_facturacion_filtros.js"></script>
     <script src="datos_facturacion_filtros_ytd.js"></script>
     <script src="datos_facturacion_filtros_fechas.js"></script>
+    <script src="datos_facturacion_periodos.js"></script>
     <style>
         :root { color-scheme: dark; }
         html { background: #020617; }
@@ -44,14 +45,14 @@
         .field-label { font-size: 9px; line-height: 1; font-weight: 800; letter-spacing: .065em; text-transform: uppercase; color: #94a3b8; }
         .select-control, .search-control { color: #e2e8f0; background: #020617; border: 1px solid #334155; border-radius: 10px; outline: none; transition: border-color .18s, box-shadow .18s; }
         .select-control { min-width: 210px; padding: 9px 12px; font-size: 13px; font-weight: 650; }
-        .team-select { width: 138px; min-width: 138px; }
+        .team-select { width: 140px; min-width: 140px; }
         .search-control { width: 100%; padding: 8px 11px; font-size: 12px; }
         .select-control:focus, .search-control:focus { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
         .search-control::placeholder { color: #64748b; }
         .select-control option { background: #0f172a; color: #e2e8f0; }
-        .fa-select { position: relative; width: 155px; }
-        .ifa-select { width: 205px; }
-        .ticker-select { width: 165px; }
+        .fa-select { position: relative; width: 160px; }
+        .ifa-select { width: 180px; }
+        .ticker-select { width: 160px; }
         .fa-select-trigger { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; color: #f8fafc; background: #020617; border: 1px solid #334155; border-radius: 10px; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; transition: border-color .18s, box-shadow .18s; }
         .fa-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .fa-select-trigger:hover, .fa-select-trigger[aria-expanded="true"] { border-color: rgba(16,185,129,.72); box-shadow: 0 0 0 3px rgba(16,185,129,.10); }
@@ -85,15 +86,18 @@
         .period-button.active, .mini-segment.active { color: #34d399; background: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.28); }
 
         .top-panel { padding: 24px 20px 20px; }
-        .top-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-        .top-row > .brand { flex: 1 1 360px; }
-        .top-controls { display: flex; flex: 0 0 auto; min-width: 0; align-items: end; justify-content: flex-end; gap: 10px; flex-wrap: nowrap; }
+        .top-row { display: flex; align-items: flex-start; justify-content: flex-start; gap: 10px; }
+        .top-row > .brand { flex: 0 0 220px; }
+        .top-controls { display: flex; flex: 1 1 auto; min-width: 0; align-items: end; justify-content: center; gap: 6px; padding-top: 18px; flex-wrap: nowrap; }
         .top-controls .select-control { min-width: 0; min-height: 36px; padding: 8px 10px; font-size: 12px; }
         .updated-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; color: #34d399; background: rgba(16,185,129,.09); border: 1px solid rgba(16,185,129,.36); border-radius: 4px; font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: .025em; white-space: nowrap; }
         .updated-badge strong { color: #34d399; }
         .top-divider { height: 1px; margin: 24px 0; background: #1e293b; }
-        .period-control { min-width: 180px; }
+        .period-control { min-width: 150px; }
         .period-control .period-button { flex: 1; padding: 7px 10px; font-size: 11px; white-space: nowrap; }
+        .period-select-year { width: 82px; }
+        .period-select-month { width: 115px; }
+        .period-field.is-loading .select-control { color: #64748b; border-color: #1e293b; cursor: wait; }
 
         .kpi-grid { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(145px, 1fr)); gap: 16px; }
         .kpi-grid.is-ytd { grid-template-columns: repeat(3, minmax(165px, 1fr)); }
@@ -141,7 +145,7 @@
 
         @media (max-width: 1280px) {
             .top-row { align-items: flex-start; flex-direction: column; }
-            .top-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+            .top-controls { width: 100%; justify-content: space-between; padding-top: 0; flex-wrap: wrap; }
             .kpi-grid, .kpi-grid.is-ytd { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 640px) {
@@ -320,6 +324,14 @@
                     <div class="segmented-control period-control">
                         <button id="btn-mtd" onclick="cambiarSolapa('mtd')" class="period-button active">MTD (Mes)</button>
                         <button id="btn-ytd" onclick="cambiarSolapa('ytd')" class="period-button">YTD (Año)</button>
+                    </div>
+                    <div id="campoPeriodoAnio" class="field-block period-field">
+                        <label for="selectorPeriodoAnio" class="field-label">Año</label>
+                        <select id="selectorPeriodoAnio" class="select-control period-select-year" onchange="cambiarAnioSeleccionado()"></select>
+                    </div>
+                    <div id="campoPeriodoMes" class="field-block period-field">
+                        <label for="selectorPeriodoMes" class="field-label">Mes</label>
+                        <select id="selectorPeriodoMes" class="select-control period-select-month" onchange="cambiarMesSeleccionado()"></select>
                     </div>
                 </div>
             </div>
@@ -537,6 +549,16 @@
         let clienteAbiertoActual = ''; 
         let tickerAbiertoActual = '';
         const cacheVistas = new Map();
+        const cacheVistasPeriodo = new Map();
+        const promesasCargaPeriodos = new Map();
+        let cuboPeriodoPersonalizado = null;
+        let periodoPersonalizadoActivo = false;
+        let anioPeriodoSeleccionado = Number(datosDashboard?.anio_actual || new Date().getFullYear());
+        let mesPeriodoSeleccionado = Number(datosDashboard?.mes_actual || 1);
+        let clavesPeriodoCargadas = [];
+        let tokenCargaPeriodo = 0;
+        const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const MESES_CORTOS_JS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         
         let dataIFAOriginal = { labels: [], values: [], tooltips: [] };
         let dataClienteOriginal = { labels: [], values: [] };
@@ -582,7 +604,7 @@
         }
 
         function obtenerFAsActivosEquipo() {
-            const disponibles = new Set(datosDashboard.lista_fas || []);
+            const disponibles = new Set(obtenerListaFAsDisponibles());
             const mapaEquipos = obtenerMapaEquipos();
             const fasEquipo = equipoActual === 'TODOS'
                 ? Object.values(mapaEquipos).flat()
@@ -601,7 +623,7 @@
 
             const fas = new Set(obtenerFAsActivosEquipo());
             if (equipoActual === 'SS' || equipoActual === 'TODOS') {
-                (datosDashboard.lista_fas || [])
+                obtenerListaFAsDisponibles()
                     .filter(esFAHistorico)
                     .forEach(fa => fas.add(fa));
             }
@@ -651,7 +673,7 @@
             const contenedorHistoricos = document.getElementById('selectorFAHistoricos');
             const wrapperHistoricos = document.getElementById('selectorFAHistoricosWrapper');
             const fasHistoricos = (equipoActual === 'SS' || equipoActual === 'TODOS')
-                ? (datosDashboard.lista_fas || []).filter(esFAHistorico)
+                ? obtenerListaFAsDisponibles().filter(esFAHistorico)
                 : [];
             listaFAsSelector = obtenerFAsActivosEquipo();
 
@@ -838,7 +860,279 @@
             };
         }
 
+        function obtenerCuboFuente(periodo = periodoActual) {
+            if (periodoPersonalizadoActivo && cuboPeriodoPersonalizado && periodo === periodoActual) {
+                return cuboPeriodoPersonalizado;
+            }
+            return typeof datosFiltrosTicker !== 'undefined' ? datosFiltrosTicker : null;
+        }
+
+        function obtenerListaFAsDisponibles() {
+            const fuente = obtenerCuboFuente(periodoActual);
+            return periodoPersonalizadoActivo
+                ? [...(fuente?.catalogos?.fa || [])]
+                : [...(datosDashboard.lista_fas || [])];
+        }
+
+        function agregarValorMapa(mapa, clave, valor) {
+            mapa.set(clave, (mapa.get(clave) || 0) + Number(valor || 0));
+        }
+
+        function obtenerOMarcar(mapa, clave, creador) {
+            if (!mapa.has(clave)) mapa.set(clave, creador());
+            return mapa.get(clave);
+        }
+
+        function crearSerieFechasPeriodo(mapa) {
+            if (periodoActual === 'ytd') {
+                const mesesDisponibles = new Set(clavesPeriodoCargadas.map(clave => Number(String(clave).slice(5, 7))));
+                return {
+                    labels: MESES_CORTOS_JS,
+                    values: MESES_CORTOS_JS.map((_, indice) => {
+                        const mes = indice + 1;
+                        return mesesDisponibles.has(mes) ? Number(mapa.get(mes) || 0) : null;
+                    })
+                };
+            }
+            const ordenadas = Array.from(mapa.entries()).sort((a, b) => ordenarEtiquetasFecha(a[0], b[0]));
+            return {
+                labels: ordenadas.map(item => item[0]),
+                values: ordenadas.map(item => item[1])
+            };
+        }
+
+        function obtenerPlanesPeriodo(fas) {
+            const planesAnio = datosDashboard.planes_mensuales?.[String(anioPeriodoSeleccionado)]
+                || datosDashboard.planes_mensuales?.[anioPeriodoSeleccionado]
+                || {};
+            const serie = Array.from({ length: 12 }, () => 0);
+            fas.forEach(fa => {
+                const plan = planesAnio[fa] || [];
+                serie.forEach((_, indice) => { serie[indice] += Number(plan[indice] || 0); });
+            });
+            return {
+                serie,
+                anual: serie.reduce((suma, valor) => suma + valor, 0),
+                mensual: Number(serie[mesPeriodoSeleccionado - 1] || 0)
+            };
+        }
+
+        function obtenerCortePeriodoPersonalizado() {
+            if (periodoActual === 'mtd') {
+                const diasMes = new Date(anioPeriodoSeleccionado, mesPeriodoSeleccionado, 0).getDate();
+                return {
+                    anio: anioPeriodoSeleccionado,
+                    mes: mesPeriodoSeleccionado,
+                    dia: diasMes,
+                    diasMes
+                };
+            }
+            const meses = clavesPeriodoCargadas.map(clave => Number(String(clave).slice(5, 7)));
+            const mes = meses.length ? Math.max(...meses) : 1;
+            return {
+                anio: anioPeriodoSeleccionado,
+                mes,
+                dia: new Date(anioPeriodoSeleccionado, mes, 0).getDate(),
+                diasMes: new Date(anioPeriodoSeleccionado, mes, 0).getDate()
+            };
+        }
+
+        function crearVistaPeriodoPersonalizado(fasSolicitados) {
+            const fuente = cuboPeriodoPersonalizado;
+            const bloque = fuente?.[periodoActual];
+            if (!fuente || !bloque) return crearVistaVacia();
+            const catalogos = fuente.catalogos || {};
+            const fasPermitidos = new Set(fasSolicitados);
+            const filas = (bloque.filas || []).filter(fila => fasPermitidos.has(catalogos.fa?.[fila[0]]));
+            const fechasFiltradas = (bloque.fechas || []).filter(fila => fasPermitidos.has(catalogos.fa?.[fila[0]]));
+            const ladosFiltrados = (bloque.lados || []).filter(fila => fasPermitidos.has(catalogos.fa?.[fila[0]]));
+
+            const fa = new Map();
+            const asesores = new Map();
+            const productores = new Map();
+            const clientes = new Map();
+            const tickers = new Map();
+            const fechas = new Map();
+            const fasPorProductor = new Map();
+            const faAsesores = new Map();
+            const detalleAsesores = new Map();
+            const detalleProductores = new Map();
+            const detalleClientes = new Map();
+            const detalleTickers = new Map();
+            let total = 0;
+
+            filas.forEach(fila => {
+                const nombreFA = catalogos.fa?.[fila[0]];
+                const asesor = catalogos.ifa?.[fila[1]];
+                const productor = catalogos.productor?.[fila[2]];
+                const cliente = catalogos.cliente?.[fila[3]];
+                const ticker = catalogos.ticker?.[fila[4]];
+                const valor = Number(fila[5] || 0);
+                total += valor;
+                agregarValorMapa(fa, nombreFA, valor);
+                agregarValorMapa(asesores, asesor, valor);
+                agregarValorMapa(productores, productor, valor);
+                agregarValorMapa(clientes, cliente, valor);
+                agregarValorMapa(tickers, ticker, valor);
+                obtenerOMarcar(fasPorProductor, productor, () => new Set()).add(nombreFA);
+                agregarValorMapa(obtenerOMarcar(faAsesores, nombreFA, () => new Map()), asesor, valor);
+
+                const detalleAsesor = obtenerOMarcar(detalleAsesores, asesor, () => ({
+                    total: 0, fas: new Set(), clientes: new Map(), productores: new Map(), tickers: new Map(), fechas: new Map()
+                }));
+                detalleAsesor.total += valor;
+                detalleAsesor.fas.add(nombreFA);
+                agregarValorMapa(detalleAsesor.clientes, cliente, valor);
+                agregarValorMapa(detalleAsesor.productores, productor, valor);
+                agregarValorMapa(detalleAsesor.tickers, ticker, valor);
+
+                const detalleProductor = obtenerOMarcar(detalleProductores, productor, () => ({ total: 0, fas: new Set(), clientes: new Map() }));
+                detalleProductor.total += valor;
+                detalleProductor.fas.add(nombreFA);
+                agregarValorMapa(detalleProductor.clientes, cliente, valor);
+
+                const detalleCliente = obtenerOMarcar(detalleClientes, cliente, () => ({ total: 0, tickers: new Map(), fechas: new Map() }));
+                detalleCliente.total += valor;
+                agregarValorMapa(detalleCliente.tickers, ticker, valor);
+
+                const detalleTicker = obtenerOMarcar(detalleTickers, ticker, () => ({ asesores: new Map(), clientes: new Map(), compraVenta: new Map() }));
+                agregarValorMapa(detalleTicker.asesores, asesor, valor);
+                agregarValorMapa(detalleTicker.clientes, cliente, valor);
+            });
+
+            fechasFiltradas.forEach(fila => {
+                const asesor = catalogos.ifa?.[fila[1]];
+                const cliente = catalogos.cliente?.[fila[2]];
+                const claveFecha = fila[4];
+                const valor = Number(fila[5] || 0);
+                agregarValorMapa(fechas, claveFecha, valor);
+                const detalleAsesor = detalleAsesores.get(asesor);
+                if (detalleAsesor) agregarValorMapa(detalleAsesor.fechas, claveFecha, valor);
+                const detalleCliente = detalleClientes.get(cliente);
+                if (detalleCliente) agregarValorMapa(detalleCliente.fechas, claveFecha, valor);
+            });
+
+            ladosFiltrados.forEach(fila => {
+                const asesor = catalogos.ifa?.[fila[1]];
+                const ticker = catalogos.ticker?.[fila[2]];
+                const detalleTicker = detalleTickers.get(ticker);
+                if (!detalleTicker) return;
+                const actual = detalleTicker.compraVenta.get(asesor) || { compra: 0, venta: 0 };
+                if (fila[3] === 0) actual.compra += Number(fila[4] || 0);
+                else actual.venta += Number(fila[4] || 0);
+                detalleTicker.compraVenta.set(asesor, actual);
+            });
+
+            const corte = obtenerCortePeriodoPersonalizado();
+            const factorRunRate = periodoActual === 'mtd' && corte.dia > 0 ? corte.diasMes / corte.dia : 0;
+            const planes = obtenerPlanesPeriodo(fasSolicitados);
+            const serieProductores = mapaAserieOrdenada(productores);
+            const serieFechas = crearSerieFechasPeriodo(fechas);
+            const faDetalles = {};
+            faAsesores.forEach((mapa, nombreFA) => { faDetalles[nombreFA] = mapaAserieOrdenada(mapa, 15); });
+
+            const ifaDetalles = {};
+            detalleAsesores.forEach((detalle, asesor) => {
+                const serieClientes = mapaAserieOrdenada(detalle.clientes);
+                ifaDetalles[asesor] = {
+                    fa: Array.from(detalle.fas).sort().join(' / ') || 'N/A',
+                    labels: serieClientes.labels,
+                    values: serieClientes.values,
+                    total: detalle.total,
+                    run_rate: periodoActual === 'mtd' ? detalle.total * factorRunRate : 0,
+                    fechas: crearSerieFechasPeriodo(detalle.fechas),
+                    ticker: Array.from(detalle.tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([t, v]) => ({ t, v })),
+                    productores: mapaAserieOrdenada(detalle.productores)
+                };
+            });
+
+            const productorDetalles = {};
+            detalleProductores.forEach((detalle, productor) => {
+                const serieClientes = mapaAserieOrdenada(detalle.clientes);
+                productorDetalles[productor] = {
+                    fa: Array.from(detalle.fas).sort().join(' / ') || 'N/A',
+                    labels: serieClientes.labels,
+                    values: serieClientes.values,
+                    total: detalle.total
+                };
+            });
+
+            const clienteDetalles = {};
+            detalleClientes.forEach((detalle, cliente) => {
+                clienteDetalles[cliente] = {
+                    total: detalle.total,
+                    fechas: crearSerieFechasPeriodo(detalle.fechas),
+                    ticker: Array.from(detalle.tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([t, v]) => ({ t, v }))
+                };
+            });
+
+            const tickerDetalles = {};
+            const topTickers = Array.from(tickers.entries()).sort((a, b) => b[1] - a[1]).slice(0, 40);
+            topTickers.forEach(([ticker]) => {
+                const detalle = detalleTickers.get(ticker);
+                const compraVenta = Array.from(detalle.compraVenta.entries()).sort((a, b) =>
+                    (b[1].compra + b[1].venta) - (a[1].compra + a[1].venta)
+                );
+                const totalCompra = compraVenta.reduce((suma, item) => suma + item[1].compra, 0);
+                const totalVenta = compraVenta.reduce((suma, item) => suma + item[1].venta, 0);
+                tickerDetalles[ticker] = {
+                    ifa: mapaAserieOrdenada(detalle.asesores, 20),
+                    cliente: mapaAserieOrdenada(detalle.clientes, 20),
+                    compra_venta: {
+                        labels: compraVenta.map(item => item[0]),
+                        compras: compraVenta.map(item => item[1].compra),
+                        ventas: compraVenta.map(item => item[1].venta),
+                        total_compra: totalCompra,
+                        total_venta: totalVenta,
+                        diferencia: totalCompra - totalVenta
+                    }
+                };
+            });
+
+            const runRate = periodoActual === 'mtd' ? total * factorRunRate : 0;
+            const fechasPlan = periodoActual === 'ytd'
+                ? planes.serie.map((valor, indice) => indice + 1 >= 7 ? valor : null)
+                : [];
+            return {
+                total,
+                run_rate: runRate,
+                plan_anual: planes.anual,
+                plan_mensual: planes.mensual,
+                plan_ytd: planes.serie.slice(0, corte.mes).reduce((suma, valor) => suma + valor, 0),
+                mes_plan: NOMBRES_MESES[mesPeriodoSeleccionado - 1] || '',
+                cumplimiento_ytd: planes.anual > 0 ? total / planes.anual * 100 : 0,
+                cumplimiento_mtd: planes.mensual > 0 ? runRate / planes.mensual * 100 : 0,
+                fa: mapaAserieOrdenada(fa),
+                ifa: {
+                    labels: serieProductores.labels,
+                    values: serieProductores.values,
+                    tooltips: serieProductores.labels.map(productor => Array.from(fasPorProductor.get(productor) || []).sort().join(' / ') || 'N/A')
+                },
+                cliente: mapaAserieOrdenada(clientes),
+                fechas: { labels: serieFechas.labels, values: serieFechas.values, plan_values: fechasPlan },
+                ticker: topTickers.map(([t, v]) => ({ t, v })),
+                fa_detalles: faDetalles,
+                ifa_detalles: ifaDetalles,
+                productor_detalles: productorDetalles,
+                cliente_detalles: clienteDetalles,
+                ticker_detalles: tickerDetalles
+            };
+        }
+
         function obtenerVistaActual(periodo = periodoActual) {
+            if (periodoPersonalizadoActivo && cuboPeriodoPersonalizado && periodo === periodoActual) {
+                const fasPeriodo = obtenerFAsParaDatos();
+                const clavePeriodo = [
+                    periodo,
+                    anioPeriodoSeleccionado,
+                    mesPeriodoSeleccionado,
+                    ...fasPeriodo.slice().sort()
+                ].join('|');
+                if (!cacheVistasPeriodo.has(clavePeriodo)) {
+                    cacheVistasPeriodo.set(clavePeriodo, crearVistaPeriodoPersonalizado(fasPeriodo));
+                }
+                return cacheVistasPeriodo.get(clavePeriodo);
+            }
             const fas = obtenerFAsParaDatos().filter(fa => datosDashboard.vistas?.[fa]?.[periodo]);
             const clave = `${periodo}|${fas.slice().sort().join('|')}`;
             if (cacheVistas.has(clave)) return cacheVistas.get(clave);
@@ -947,8 +1241,8 @@
 
         function obtenerIFAsDisponibles() {
             const nombres = new Set();
-
-            ['mtd', 'ytd'].forEach(periodo => {
+            const periodos = periodoPersonalizadoActivo ? [periodoActual] : ['mtd', 'ytd'];
+            periodos.forEach(periodo => {
                 Object.keys(obtenerVistaActual(periodo)?.ifa_detalles || {}).forEach(ifa => nombres.add(String(ifa)));
             });
 
@@ -1104,8 +1398,9 @@
         }
 
         function obtenerTickersDisponibles() {
-            if (typeof datosFiltrosTicker === 'undefined') return [];
-            return [...(datosFiltrosTicker.catalogos?.ticker || [])]
+            const fuente = obtenerCuboFuente(periodoActual);
+            if (!fuente) return [];
+            return [...(fuente.catalogos?.ticker || [])]
                 .sort((a, b) => String(a).localeCompare(String(b), 'es', { sensitivity: 'base' }));
         }
 
@@ -1334,13 +1629,12 @@
 
         function obtenerDatosFAPorIFAs(periodo = periodoActual) {
             const porFA = new Map();
-
-            obtenerFAsParaDatos().forEach(fa => {
-                const detallesFA = datosDashboard.vistas?.[fa]?.[periodo]?.ifa_detalles || {};
-                obtenerIFAsSeleccionados().forEach(ifa => {
-                    const total = Number(detallesFA[ifa]?.total || 0);
-                    if (total !== 0) porFA.set(fa, (porFA.get(fa) || 0) + total);
-                });
+            const fuente = obtenerCuboFuente(periodo);
+            const catalogos = fuente?.catalogos || {};
+            obtenerFilasCuboFiltradas(periodo).forEach(fila => {
+                const fa = catalogos.fa?.[fila[0]];
+                const total = Number(fila[5] || 0);
+                if (fa && total !== 0) porFA.set(fa, (porFA.get(fa) || 0) + total);
             });
 
             const ordenados = Array.from(porFA.entries()).sort((a, b) => b[1] - a[1]);
@@ -1371,20 +1665,22 @@
         }
 
         function obtenerFechaCorte() {
+            if (periodoPersonalizadoActivo) return obtenerCortePeriodoPersonalizado();
             const [dia = 1, mes = 1, anio = 2026] = String(datosDashboard.ultima_actualizacion || '').split('/').map(Number);
             return { dia, mes, anio };
         }
 
         function obtenerFilasCuboFiltradas(periodo = periodoActual, filtros = {}) {
-            if (typeof datosFiltrosTicker === 'undefined') return [];
-            const catalogos = datosFiltrosTicker.catalogos || {};
+            const fuente = obtenerCuboFuente(periodo);
+            if (!fuente) return [];
+            const catalogos = fuente.catalogos || {};
             const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const tickersPermitidos = filtros.tickers
                 ? new Set(filtros.tickers)
                 : hayFiltroTickerActivo() ? new Set(tickersSeleccionados) : null;
 
-            return (datosFiltrosTicker[periodo]?.filas || []).filter(fila => {
+            return (fuente[periodo]?.filas || []).filter(fila => {
                 const fa = catalogos.fa?.[fila[0]];
                 const ifa = catalogos.ifa?.[fila[1]];
                 const productor = catalogos.productor?.[fila[2]];
@@ -1400,15 +1696,16 @@
         }
 
         function obtenerFechasCuboFiltradas(periodo = periodoActual, filtros = {}) {
-            if (typeof datosFiltrosTicker === 'undefined') return [];
-            const catalogos = datosFiltrosTicker.catalogos || {};
+            const fuente = obtenerCuboFuente(periodo);
+            if (!fuente) return [];
+            const catalogos = fuente.catalogos || {};
             const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const tickersPermitidos = filtros.tickers
                 ? new Set(filtros.tickers)
                 : hayFiltroTickerActivo() ? new Set(tickersSeleccionados) : null;
 
-            return (datosFiltrosTicker[periodo]?.fechas || []).filter(fila => {
+            return (fuente[periodo]?.fechas || []).filter(fila => {
                 const fa = catalogos.fa?.[fila[0]];
                 const ifa = catalogos.ifa?.[fila[1]];
                 const cliente = catalogos.cliente?.[fila[2]];
@@ -1426,7 +1723,7 @@
         }
 
         function obtenerAnaliticaTicker(periodo = periodoActual) {
-            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const catalogos = obtenerCuboFuente(periodo)?.catalogos || {};
             const filas = obtenerFilasCuboFiltradas(periodo);
             const productores = new Map();
             const asesores = new Map();
@@ -1497,7 +1794,7 @@
         }
 
         function obtenerDetallePersonaCubo(tipo, nombre, periodo = periodoActual) {
-            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const catalogos = obtenerCuboFuente(periodo)?.catalogos || {};
             const filtros = tipo === 'productor' ? { productor: nombre } : { asesor: nombre };
             const filas = obtenerFilasCuboFiltradas(periodo, filtros);
             const clientes = new Map();
@@ -1515,7 +1812,7 @@
         }
 
         function obtenerDetalleClienteCubo(cliente, periodo = periodoActual) {
-            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const catalogos = obtenerCuboFuente(periodo)?.catalogos || {};
             const filas = obtenerFilasCuboFiltradas(periodo, { cliente });
             const tickers = new Map();
             let total = 0;
@@ -1549,7 +1846,8 @@
         }
 
         function obtenerDetalleTickerCubo(ticker, periodo = periodoActual) {
-            const catalogos = datosFiltrosTicker?.catalogos || {};
+            const fuente = obtenerCuboFuente(periodo);
+            const catalogos = fuente?.catalogos || {};
             const filas = obtenerFilasCuboFiltradas(periodo, { tickers: [ticker] });
             const asesores = new Map();
             const clientes = new Map();
@@ -1564,7 +1862,7 @@
             const fasPermitidos = new Set(obtenerFAsParaDatos());
             const ifasPermitidos = hayFiltroIFAActivo() ? new Set(obtenerIFAsSeleccionados()) : null;
             const compraVenta = new Map();
-            (datosFiltrosTicker?.[periodo]?.lados || []).forEach(fila => {
+            (fuente?.[periodo]?.lados || []).forEach(fila => {
                 const fa = catalogos.fa?.[fila[0]];
                 const asesor = catalogos.ifa?.[fila[1]];
                 const tickerFila = catalogos.ticker?.[fila[2]];
@@ -1651,10 +1949,233 @@
             renderizarDashboard();
         }
 
+        function obtenerManifiestoPeriodos() {
+            return typeof datosPeriodosDisponibles !== 'undefined'
+                ? datosPeriodosDisponibles
+                : { anios: [Number(datosDashboard.anio_actual)], periodos: {} };
+        }
+
+        function clavePeriodo(anio, mes) {
+            return `${Number(anio)}-${String(Number(mes)).padStart(2, '0')}`;
+        }
+
+        function establecerCargaPeriodo(cargando) {
+            ['campoPeriodoAnio', 'campoPeriodoMes'].forEach(id => {
+                document.getElementById(id)?.classList.toggle('is-loading', cargando);
+            });
+            ['selectorPeriodoAnio', 'selectorPeriodoMes'].forEach(id => {
+                const control = document.getElementById(id);
+                if (control) control.disabled = cargando;
+            });
+        }
+
+        function cargarArchivoPeriodo(clave) {
+            globalThis.datosPeriodosFacturacion = globalThis.datosPeriodosFacturacion || {};
+            if (globalThis.datosPeriodosFacturacion[clave]) {
+                return Promise.resolve(globalThis.datosPeriodosFacturacion[clave]);
+            }
+            if (promesasCargaPeriodos.has(clave)) return promesasCargaPeriodos.get(clave);
+
+            const meta = obtenerManifiestoPeriodos().periodos?.[clave];
+            if (!meta?.archivo) return Promise.reject(new Error(`No hay datos disponibles para ${clave}.`));
+
+            const promesa = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = meta.archivo;
+                script.async = true;
+                script.dataset.periodo = clave;
+                script.onload = () => {
+                    const datos = globalThis.datosPeriodosFacturacion?.[clave];
+                    if (datos) resolve(datos);
+                    else reject(new Error(`El archivo ${meta.archivo} no contiene el período ${clave}.`));
+                };
+                script.onerror = () => reject(new Error(`No se pudo cargar ${meta.archivo}.`));
+                document.head.appendChild(script);
+            }).catch(error => {
+                promesasCargaPeriodos.delete(clave);
+                throw error;
+            });
+            promesasCargaPeriodos.set(clave, promesa);
+            return promesa;
+        }
+
+        function construirCuboPeriodo(claves, periodo) {
+            const mapas = {
+                filas: new Map(),
+                fechas: new Map(),
+                lados: new Map()
+            };
+            const conjuntos = {
+                fa: new Set(), ifa: new Set(), productor: new Set(), cliente: new Set(), ticker: new Set()
+            };
+
+            claves.forEach(clave => {
+                const datos = globalThis.datosPeriodosFacturacion?.[clave];
+                if (!datos) return;
+                const catalogos = datos.catalogos || {};
+                (datos.filas || []).forEach(fila => {
+                    const fa = catalogos.fa?.[fila[0]] || 'Sin FA';
+                    const ifa = catalogos.ifa?.[fila[1]] || 'Sin Asesor';
+                    const productor = catalogos.productor?.[fila[2]] || 'Sin Productor';
+                    const cliente = catalogos.cliente?.[fila[3]] || 'Sin Cliente';
+                    const ticker = catalogos.ticker?.[fila[4]] || 'Sin Ticker';
+                    const lado = Number(fila[5]);
+                    const valor = Number(fila[6] || 0);
+                    conjuntos.fa.add(fa);
+                    conjuntos.ifa.add(ifa);
+                    conjuntos.productor.add(productor);
+                    conjuntos.cliente.add(cliente);
+                    conjuntos.ticker.add(ticker);
+
+                    const claveFila = JSON.stringify([fa, ifa, productor, cliente, ticker]);
+                    agregarValorMapa(mapas.filas, claveFila, valor);
+                    const fecha = periodo === 'ytd'
+                        ? Number(datos.mes)
+                        : NOMBRES_MESES[Number(datos.mes) - 1];
+                    const claveFecha = JSON.stringify([fa, ifa, cliente, ticker, fecha]);
+                    agregarValorMapa(mapas.fechas, claveFecha, valor);
+                    if (lado === 0 || lado === 1) {
+                        const claveLado = JSON.stringify([fa, ifa, ticker, lado]);
+                        agregarValorMapa(mapas.lados, claveLado, valor);
+                    }
+                });
+            });
+
+            const catalogos = Object.fromEntries(
+                Object.entries(conjuntos).map(([nombre, valores]) => [
+                    nombre,
+                    Array.from(valores).sort((a, b) => String(a).localeCompare(String(b), 'es', { sensitivity: 'base' }))
+                ])
+            );
+            const indices = Object.fromEntries(
+                Object.entries(catalogos).map(([nombre, valores]) => [nombre, new Map(valores.map((valor, indice) => [valor, indice]))])
+            );
+
+            const filas = Array.from(mapas.filas, ([clave, valor]) => {
+                const [fa, ifa, productor, cliente, ticker] = JSON.parse(clave);
+                return [indices.fa.get(fa), indices.ifa.get(ifa), indices.productor.get(productor), indices.cliente.get(cliente), indices.ticker.get(ticker), valor];
+            });
+            const fechas = Array.from(mapas.fechas, ([clave, valor]) => {
+                const [fa, ifa, cliente, ticker, fecha] = JSON.parse(clave);
+                return [indices.fa.get(fa), indices.ifa.get(ifa), indices.cliente.get(cliente), indices.ticker.get(ticker), fecha, valor];
+            });
+            const lados = Array.from(mapas.lados, ([clave, valor]) => {
+                const [fa, ifa, ticker, lado] = JSON.parse(clave);
+                return [indices.fa.get(fa), indices.ifa.get(ifa), indices.ticker.get(ticker), lado, valor];
+            });
+            return { catalogos, [periodo]: { filas, fechas, lados } };
+        }
+
+        function obtenerMesesDisponibles(anio) {
+            const meses = Object.values(obtenerManifiestoPeriodos().periodos || {})
+                .filter(meta => Number(meta.anio) === Number(anio))
+                .map(meta => Number(meta.mes));
+            if (Number(anio) === Number(datosDashboard.anio_actual)) meses.push(Number(datosDashboard.mes_actual));
+            return Array.from(new Set(meses)).filter(mes => mes >= 1 && mes <= 12).sort((a, b) => a - b);
+        }
+
+        function poblarSelectorMeses() {
+            const selector = document.getElementById('selectorPeriodoMes');
+            const anio = Number(document.getElementById('selectorPeriodoAnio').value || anioPeriodoSeleccionado);
+            const meses = obtenerMesesDisponibles(anio);
+            const mesPreferido = meses.includes(mesPeriodoSeleccionado)
+                ? mesPeriodoSeleccionado
+                : (meses.at(-1) || Number(datosDashboard.mes_actual));
+            selector.replaceChildren(...meses.map(mes => {
+                const opcion = document.createElement('option');
+                opcion.value = mes;
+                opcion.textContent = NOMBRES_MESES[mes - 1];
+                return opcion;
+            }));
+            selector.value = String(mesPreferido);
+            mesPeriodoSeleccionado = mesPreferido;
+        }
+
+        function inicializarSelectoresPeriodo() {
+            const selector = document.getElementById('selectorPeriodoAnio');
+            const anios = new Set((obtenerManifiestoPeriodos().anios || []).map(Number));
+            anios.add(Number(datosDashboard.anio_actual));
+            selector.replaceChildren(...Array.from(anios).sort((a, b) => b - a).map(anio => {
+                const opcion = document.createElement('option');
+                opcion.value = anio;
+                opcion.textContent = anio;
+                return opcion;
+            }));
+            selector.value = String(anioPeriodoSeleccionado);
+            poblarSelectorMeses();
+        }
+
+        function sincronizarFiltrosConPeriodo() {
+            const disponibles = new Set(obtenerListaFAsDisponibles());
+            fasSeleccionados = new Set(Array.from(fasSeleccionados).filter(fa => disponibles.has(fa)));
+            inicializarSelectorFA();
+            actualizarSelectorIFA(false);
+            actualizarSelectorTicker(false);
+            document.getElementById('buscadorIFA').value = '';
+            document.getElementById('buscadorCliente').value = '';
+        }
+
+        async function cambiarAnioSeleccionado() {
+            anioPeriodoSeleccionado = Number(document.getElementById('selectorPeriodoAnio').value);
+            poblarSelectorMeses();
+            await cambiarPeriodoSeleccionado();
+        }
+
+        async function cambiarMesSeleccionado() {
+            mesPeriodoSeleccionado = Number(document.getElementById('selectorPeriodoMes').value);
+            await cambiarPeriodoSeleccionado();
+        }
+
+        async function cambiarPeriodoSeleccionado() {
+            const token = ++tokenCargaPeriodo;
+            anioPeriodoSeleccionado = Number(document.getElementById('selectorPeriodoAnio').value || datosDashboard.anio_actual);
+            mesPeriodoSeleccionado = Number(document.getElementById('selectorPeriodoMes').value || datosDashboard.mes_actual);
+            const esPeriodoActual = anioPeriodoSeleccionado === Number(datosDashboard.anio_actual)
+                && (periodoActual === 'ytd' || mesPeriodoSeleccionado === Number(datosDashboard.mes_actual));
+
+            if (esPeriodoActual) {
+                periodoPersonalizadoActivo = false;
+                cuboPeriodoPersonalizado = null;
+                clavesPeriodoCargadas = [];
+                cacheVistasPeriodo.clear();
+                sincronizarFiltrosConPeriodo();
+                renderizarDashboard();
+                return;
+            }
+
+            const claves = periodoActual === 'ytd'
+                ? Object.keys(obtenerManifiestoPeriodos().periodos || {})
+                    .filter(clave => Number(clave.slice(0, 4)) === anioPeriodoSeleccionado)
+                    .sort()
+                : [clavePeriodo(anioPeriodoSeleccionado, mesPeriodoSeleccionado)];
+            if (!claves.length) {
+                alert(`No hay facturación disponible para ${anioPeriodoSeleccionado}.`);
+                return;
+            }
+
+            establecerCargaPeriodo(true);
+            try {
+                await Promise.all(claves.map(cargarArchivoPeriodo));
+                if (token !== tokenCargaPeriodo) return;
+                clavesPeriodoCargadas = claves;
+                cuboPeriodoPersonalizado = construirCuboPeriodo(claves, periodoActual);
+                periodoPersonalizadoActivo = true;
+                cacheVistasPeriodo.clear();
+                sincronizarFiltrosConPeriodo();
+                renderizarDashboard();
+            } catch (error) {
+                console.error(error);
+                alert(`${error.message}\n\nAsegurate de subir a GitHub los archivos mensuales generados por el Python.`);
+            } finally {
+                if (token === tokenCargaPeriodo) establecerCargaPeriodo(false);
+            }
+        }
+
         window.onload = () => {
             if (typeof datosDashboard !== 'undefined') {
                 document.getElementById('lblActualizacion').innerText = datosDashboard.ultima_actualizacion;
                 equipoActual = document.getElementById('selectorEquipo').value;
+                inicializarSelectoresPeriodo();
                 inicializarSelectorFA();
                 actualizarSelectorIFA(true);
                 actualizarSelectorTicker(true);
@@ -1676,15 +2197,16 @@
             }
         });
 
-        function cambiarSolapa(periodo) {
+        async function cambiarSolapa(periodo) {
             periodoActual = periodo;
             const btnMtd = document.getElementById('btn-mtd');
             const btnYtd = document.getElementById('btn-ytd');
             btnMtd.classList.toggle('active', periodo === 'mtd');
             btnYtd.classList.toggle('active', periodo === 'ytd');
+            document.getElementById('campoPeriodoMes').classList.toggle('hidden', periodo === 'ytd');
             document.getElementById('buscadorIFA').value = '';
             document.getElementById('buscadorCliente').value = '';
-            renderizarDashboard();
+            await cambiarPeriodoSeleccionado();
         }
 
         // --- LÓGICA DE BUSCADORES ---
@@ -2011,6 +2533,13 @@
             const ifaFiltrado = hayFiltroIFAActivo();
             const tickerFiltrado = hayFiltroTickerActivo();
             const filtroSinPlan = ifaFiltrado || tickerFiltrado;
+            const anioVista = periodoPersonalizadoActivo
+                ? anioPeriodoSeleccionado
+                : Number(datosDashboard.anio_actual || obtenerFechaCorte().anio);
+            const sinPlanConfigurado = periodoActual === 'mtd'
+                ? Number(data.plan_mensual || 0) <= 0
+                : Number(data.plan_anual || 0) <= 0;
+            const planNoVisible = filtroSinPlan || sinPlanConfigurado;
             const analiticaTicker = tickerFiltrado ? obtenerAnaliticaTicker(periodoActual) : null;
             const detalleIFA = ifaFiltrado && !tickerFiltrado ? obtenerDetalleIFA() : null;
             const etiquetaIFAs = obtenerEtiquetaIFAsSeleccionados();
@@ -2067,18 +2596,22 @@
             const kpiRunRateCard = document.getElementById('kpiRunRateCard');
             const kpiPlanPrefijo = document.getElementById('kpiPlanPrefijo');
             const kpiCumplimientoSufijo = document.getElementById('kpiCumplimientoSufijo');
-            kpiPlanPrefijo.classList.toggle('hidden', filtroSinPlan);
-            kpiCumplimientoSufijo.classList.toggle('hidden', filtroSinPlan);
+            kpiPlanPrefijo.classList.toggle('hidden', planNoVisible);
+            kpiCumplimientoSufijo.classList.toggle('hidden', planNoVisible);
             
             if (periodoActual === 'mtd') {
                 kpiRunRateCard.classList.remove('hidden');
                 kpiGrid.classList.remove('is-ytd');
                 document.getElementById('lblPlan').innerText = 'Plan Mensual';
-                if (filtroSinPlan) {
+                if (planNoVisible) {
                     document.getElementById('kpiPlan').innerText = '—';
-                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan para el filtro analítico';
+                    document.getElementById('lblPlanDetalle').innerText = filtroSinPlan
+                        ? 'Sin plan para el filtro analítico'
+                        : `Plan no configurado para ${NOMBRES_MESES[mesPeriodoSeleccionado - 1]} ${anioVista}`;
                     document.getElementById('kpiCumplimiento').innerText = '—';
-                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible con IFA o ticker filtrado';
+                    document.getElementById('lblCumplimientoDetalle').innerText = filtroSinPlan
+                        ? 'No disponible con IFA o ticker filtrado'
+                        : `Plan no configurado para ${anioVista}`;
                 } else {
                     document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_mensual);
                     document.getElementById('lblPlanDetalle').innerText = "Objetivo mensual";
@@ -2089,14 +2622,18 @@
                 kpiRunRateCard.classList.add('hidden');
                 kpiGrid.classList.add('is-ytd');
                 document.getElementById('lblPlan').innerText = "Plan Anual";
-                if (filtroSinPlan) {
+                if (planNoVisible) {
                     document.getElementById('kpiPlan').innerText = '—';
-                    document.getElementById('lblPlanDetalle').innerText = 'Sin plan para el filtro analítico';
+                    document.getElementById('lblPlanDetalle').innerText = filtroSinPlan
+                        ? 'Sin plan para el filtro analítico'
+                        : `Plan no configurado para ${anioVista}`;
                     document.getElementById('kpiCumplimiento').innerText = '—';
-                    document.getElementById('lblCumplimientoDetalle').innerText = 'No disponible con IFA o ticker filtrado';
+                    document.getElementById('lblCumplimientoDetalle').innerText = filtroSinPlan
+                        ? 'No disponible con IFA o ticker filtrado'
+                        : `Plan no configurado para ${anioVista}`;
                 } else {
                     document.getElementById('kpiPlan').innerText = formatoUSD(data.plan_anual);
-                    document.getElementById('lblPlanDetalle').innerText = "Objetivo anual 2026";
+                    document.getElementById('lblPlanDetalle').innerText = `Objetivo anual ${anioVista}`;
                     const cumplimientoAnual = data.plan_anual > 0 ? (data.total / data.plan_anual) * 100 : 0;
                     document.getElementById('kpiCumplimiento').innerText = cumplimientoAnual.toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
                     document.getElementById('lblCumplimientoDetalle').innerText = "facturación YTD vs. plan anual";
@@ -2109,7 +2646,10 @@
                 : fasSeleccionados.size === 1
                     ? `FA: ${Array.from(fasSeleccionados)[0]}`
                     : `${fasSeleccionados.size} FAs · ${nombreEquipo}`;
-            document.getElementById('lblPeriodo').innerText = `${tituloEquipo} - Información ${periodoActual.toUpperCase()}`;
+            const descripcionPeriodo = periodoActual === 'ytd'
+                ? `YTD ${anioVista}`
+                : `${NOMBRES_MESES[mesPeriodoSeleccionado - 1]} ${anioVista}`;
+            document.getElementById('lblPeriodo').innerText = `${tituloEquipo} - ${descripcionPeriodo}`;
 
             Object.values(graficosActivos).forEach(g => g.destroy());
 
@@ -2213,7 +2753,7 @@
             const valoresEvolucion = [...(fechasVista.values || [])];
             let indiceRunRate = -1;
 
-            if (periodoActual === 'ytd') {
+            if (periodoActual === 'ytd' && !periodoPersonalizadoActivo) {
                 const partesFecha = String(datosDashboard.ultima_actualizacion || '').split('/');
                 const numeroMes = Number(partesFecha[1]);
                 const abreviaturasMes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -2236,7 +2776,7 @@
             }
 
             const datasetsEvolucion = [{
-                label: periodoActual === 'ytd' ? 'Facturación / Run Rate mes actual' : 'Facturación',
+                label: periodoActual === 'ytd' && !periodoPersonalizadoActivo ? 'Facturación / Run Rate mes actual' : 'Facturación',
                 data: valoresEvolucion,
                 indiceRunRate,
                 borderColor: COLORES.emerald,
@@ -2249,7 +2789,7 @@
                 tension: 0.3
             }];
 
-            if (periodoActual === 'ytd' && !filtroSinPlan && data.fechas.plan_values?.length) {
+            if (periodoActual === 'ytd' && !planNoVisible && data.fechas.plan_values?.some(valor => Number(valor) > 0)) {
                 datasetsEvolucion.push({
                     label: 'Plan mensual',
                     data: data.fechas.plan_values,
@@ -2264,10 +2804,10 @@
             }
 
             document.getElementById('lblEvolucion').innerText = contextoFiltros
-                ? `Evolución de Facturación · ${contextoFiltros}`
+                ? `Evolución de Facturación ${anioVista} · ${contextoFiltros}`
                 : periodoActual === 'ytd'
-                    ? 'Evolución de Facturación vs. Plan Mensual'
-                    : 'Evolución de Facturación';
+                    ? `Evolución de Facturación vs. Plan Mensual · ${anioVista}`
+                    : `Evolución de Facturación · ${NOMBRES_MESES[mesPeriodoSeleccionado - 1]} ${anioVista}`;
 
             graficosActivos.evolucion = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
                 type: 'line',
